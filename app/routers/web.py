@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem
+from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem, Order
 from app.services.google_places import search_places
 from app.services.pricing import split_gross
 from app.services.tavily_enrichment import enrich_company
@@ -124,6 +124,42 @@ def prospect_status(prospect_id: int, status: str = Form(...), db: Session = Dep
     p = db.get(Prospect, prospect_id)
     p.status = ProspectStatus(status); db.commit()
     return RedirectResponse(f"/prospects/{prospect_id}", status_code=303)
+
+
+
+@router.post("/prospects/{prospect_id}/delete")
+def prospect_delete(
+    prospect_id: int,
+    db: Session = Depends(get_db),
+):
+    p = db.get(Prospect, prospect_id)
+
+    if not p:
+        return RedirectResponse("/prospects", status_code=303)
+
+    quote_count = db.scalar(
+        select(func.count())
+        .select_from(Quote)
+        .where(Quote.prospect_id == prospect_id)
+    ) or 0
+
+    order_count = db.scalar(
+        select(func.count())
+        .select_from(Order)
+        .where(Order.prospect_id == prospect_id)
+    ) or 0
+
+    # No borrar historial comercial
+    if quote_count > 0 or order_count > 0:
+        return RedirectResponse(
+            f"/prospects/{prospect_id}?delete_error=history",
+            status_code=303,
+        )
+
+    db.delete(p)
+    db.commit()
+
+    return RedirectResponse("/prospects?deleted=1", status_code=303)
 
 
 @router.get("/web-search", response_class=HTMLResponse)
