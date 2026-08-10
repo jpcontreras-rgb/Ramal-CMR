@@ -6,13 +6,23 @@ from app.db import Base
 from app import models  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+database_url = settings.database_url
+
+# Railway entrega postgresql://, pero usamos Psycopg 3.
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace(
+        "postgresql://",
+        "postgresql+psycopg://",
+        1,
+    )
+
+config.set_main_option("sqlalchemy.url", database_url)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
 def run_migrations_offline():
-    context.configure(url=settings.database_url, target_metadata=target_metadata, literal_binds=True, dialect_opts={"paramstyle":"named"})
+    context.configure(url=database_url, target_metadata=target_metadata, literal_binds=True, dialect_opts={"paramstyle":"named"})
     with context.begin_transaction(): context.run_migrations()
 
 def run_migrations_online():
