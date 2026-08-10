@@ -5,14 +5,15 @@ Revises:
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision = "0001"
 down_revision = None
 branch_labels = None
 depends_on = None
 
-prospect_status = sa.Enum("NEW","TO_CONTACT","CONTACTED","INTERESTED","QUOTED","FOLLOW_UP","CUSTOMER","LOST","DO_NOT_CONTACT", name="prospect_status")
-quote_status = sa.Enum("DRAFT","SENT","ACCEPTED","REJECTED","EXPIRED", name="quote_status")
+prospect_status = postgresql.ENUM("NEW","TO_CONTACT","CONTACTED","INTERESTED","QUOTED","FOLLOW_UP","CUSTOMER","LOST","DO_NOT_CONTACT", name="prospect_status", create_type=False)
+quote_status = postgresql.ENUM("DRAFT","SENT","ACCEPTED","REJECTED","EXPIRED", name="quote_status", create_type=False)
 
 def upgrade():
     prospect_status.create(op.get_bind(), checkfirst=True); quote_status.create(op.get_bind(), checkfirst=True)
