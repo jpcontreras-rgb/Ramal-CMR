@@ -1,0 +1,16 @@
+﻿source_row,company_name,industry,contact_name,role,phone,email,source,status,potential,activity_date,activity_type,result,next_action,next_action_date,prospect_notes
+2,Los Buenos Muchachos,,Raul Espinoza,Encargado de compras,93626262,Raul@buenosmuchachos.cl,Contacto de una amiga,FOLLOW_UP,Alto,,Llamada,Me pidio que lo llamara el dia lunes 30,Lunes 30,,Interés original: 4/5 | Probabilidad original: 70% | Observaciones: Se escucho muy interesdado en nuestros precios | Fecha original no normalizada: 46251
+3,Blue bird café,,Jacqueline Pacheco,Administradora,,Jpacheco@bluebirdcafe.cl,Contacto de ex trabajo,TO_CONTACT,,2026-07-22,Seguimiento,No respondió,,,
+4,Lover cafetería,Cafetería,Tomas Ungar,Admin,,Tomas@lovercafeteria.com,Amigo de universidad,FOLLOW_UP,Bajo,2026-07-23,Llamada,Interesado y que hablaría con chef,Viernes 24 de julio,2026-07-24,"Interés original: 2/5 | Probabilidad original: 20% | Observaciones: ,="
+5,Cafetería,Cafetería,Alejando,Admin,,alejandro@benebene.cl,Conocido,TO_CONTACT,,2026-07-23,Seguimiento,Sin respuestas,,,Última actualización: Nos tendrían en consideración
+6,Bar rey de las micheladas,Bar,Jhosue Hevia,,,jhevia@reydelasmicheladas.cl,Internet,FOLLOW_UP,Alto,2026-07-27,Email,Interesado,28 de julio,2026-07-28,Interés original: 4/5 | Probabilidad original: 70% | Observaciones: Le interesa algunos productos nuevos
+7,Banquetera,Banquetería,Eduardo cardenas,,,Chefeduardocardena@gmail.com,Conocido,INTERESTED,,2026-07-28,Email,"Interesado, pero sin respuesta aún",,,Última actualización: Por el momento no necesita nada
+8,Banquetera,Banquetería,,,,reservas@gourmand.cl,Internet,TO_CONTACT,,2026-08-03,Seguimiento,Sin respuesta,,,
+9,Banquetera,Banquetería,,,,hola@broos.cl,Internet,TO_CONTACT,,2026-08-03,Seguimiento,Sin respuesta,,,
+10,Banquetera,Banquetería,,,,dsancarlos@banquetefactory.cl,Internet,TO_CONTACT,,2026-08-03,Seguimiento,Sin respuesta,,,
+11,Sanwicheria,Sandwichería,,,,sandwicheriaelnomade@gmail.com,Internet,NEW,,2026-08-06,Seguimiento,,,,
+12,Restaurante,Restaurante,Carolina,Admin,,carolina.gallagher16@gmail.com,Conocida,NEW,,2026-08-06,Seguimiento,,,,
+13,Cafetería Santa Carla,Cafetería,Valentina,Admin,,Valentinacastillo579@gmail.com,Mag,NEW,,2026-08-06,Seguimiento,,,,
+14,Chingon,,Paula,Admin,964188258,,Mag,NEW,,2026-08-06,Seguimiento,,,,
+15,Mechadas Food,,,,998359384,,Mag,NEW,,2026-08-06,Seguimiento,,,,
+16,La santa burger,Hamburguesería,,,953596469,,Mag,NEW,,2026-08-06,Seguimiento,,,,
