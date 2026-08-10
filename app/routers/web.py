@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem, Order
+from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem, Order, Contact, Activity
 from app.services.google_places import search_places
 from app.services.pricing import split_gross
 from app.services.tavily_enrichment import enrich_company
@@ -160,6 +160,168 @@ def prospect_delete(
     db.commit()
 
     return RedirectResponse("/prospects?deleted=1", status_code=303)
+
+
+
+
+@router.post("/prospects/{prospect_id}/edit")
+def prospect_edit(
+    prospect_id: int,
+    company_name: str = Form(...),
+    branch_name: str = Form(""),
+    industry: str = Form(""),
+    subindustry: str = Form(""),
+    commune: str = Form(""),
+    city: str = Form(""),
+    address: str = Form(""),
+    phone: str = Form(""),
+    whatsapp: str = Form(""),
+    email: str = Form(""),
+    instagram: str = Form(""),
+    website: str = Form(""),
+    potential: str = Form(""),
+    owner: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    p = db.get(Prospect, prospect_id)
+
+    if not p:
+        return RedirectResponse("/prospects", status_code=303)
+
+    p.company_name = company_name.strip()
+    p.branch_name = branch_name.strip() or None
+    p.industry = industry.strip() or None
+    p.subindustry = subindustry.strip() or None
+    p.commune = commune.strip() or None
+    p.city = city.strip() or None
+    p.address = address.strip() or None
+    p.phone = phone.strip() or None
+    p.whatsapp = whatsapp.strip() or None
+    p.email = email.strip() or None
+    p.instagram = instagram.strip() or None
+    p.website = website.strip() or None
+    p.potential = potential.strip() or None
+    p.owner = owner.strip() or None
+    p.notes = notes.strip() or None
+
+    db.commit()
+
+    return RedirectResponse(
+        f"/prospects/{prospect_id}",
+        status_code=303,
+    )
+
+
+@router.post("/prospects/{prospect_id}/contacts")
+def prospect_contact_create(
+    prospect_id: int,
+    name: str = Form(...),
+    role: str = Form(""),
+    phone: str = Form(""),
+    email: str = Form(""),
+    instagram: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    p = db.get(Prospect, prospect_id)
+
+    if not p:
+        return RedirectResponse("/prospects", status_code=303)
+
+    contact = Contact(
+        prospect_id=prospect_id,
+        name=name.strip(),
+        role=role.strip() or None,
+        phone=phone.strip() or None,
+        email=email.strip() or None,
+        instagram=instagram.strip() or None,
+        notes=notes.strip() or None,
+    )
+
+    db.add(contact)
+    db.commit()
+
+    return RedirectResponse(
+        f"/prospects/{prospect_id}#contactos",
+        status_code=303,
+    )
+
+
+@router.post("/contacts/{contact_id}/delete")
+def contact_delete(
+    contact_id: int,
+    db: Session = Depends(get_db),
+):
+    contact = db.get(Contact, contact_id)
+
+    if not contact:
+        return RedirectResponse("/prospects", status_code=303)
+
+    prospect_id = contact.prospect_id
+
+    db.delete(contact)
+    db.commit()
+
+    return RedirectResponse(
+        f"/prospects/{prospect_id}#contactos",
+        status_code=303,
+    )
+
+
+@router.post("/prospects/{prospect_id}/activities")
+def prospect_activity_create(
+    prospect_id: int,
+    activity_type: str = Form(...),
+    result: str = Form(""),
+    next_action: str = Form(""),
+    next_action_at: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    p = db.get(Prospect, prospect_id)
+
+    if not p:
+        return RedirectResponse("/prospects", status_code=303)
+
+    next_dt = None
+
+    if next_action_at:
+        try:
+            next_dt = datetime.fromisoformat(next_action_at)
+        except ValueError:
+            next_dt = None
+
+    now = datetime.now()
+
+    activity = Activity(
+        prospect_id=prospect_id,
+        activity_type=activity_type,
+        happened_at=now,
+        result=result.strip() or None,
+        next_action=next_action.strip() or None,
+        next_action_at=next_dt,
+    )
+
+    db.add(activity)
+
+    p.last_contact_at = now
+
+    if next_dt:
+        p.next_action_at = next_dt
+
+        if p.status not in [
+            ProspectStatus.CUSTOMER,
+            ProspectStatus.LOST,
+            ProspectStatus.DO_NOT_CONTACT,
+        ]:
+            p.status = ProspectStatus.FOLLOW_UP
+
+    db.commit()
+
+    return RedirectResponse(
+        f"/prospects/{prospect_id}#gestiones",
+        status_code=303,
+    )
 
 
 @router.get("/web-search", response_class=HTMLResponse)

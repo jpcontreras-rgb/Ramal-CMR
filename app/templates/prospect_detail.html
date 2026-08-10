@@ -47,6 +47,474 @@
 
 {% endif %}
 </div>
+
+
+<!-- ===================================================== -->
+<!-- FICHA COMERCIAL EDITABLE -->
+<!-- ===================================================== -->
+
+<h2>Gestión comercial</h2>
+
+<div class="card">
+
+    <div class="quick-actions">
+
+        {% if p.phone %}
+        <a class="btn action-btn" href="tel:{{p.phone}}">
+            📞 Llamar
+        </a>
+        {% endif %}
+
+        {% if p.whatsapp %}
+        <a
+            class="btn action-btn"
+            target="_blank"
+            href="https://wa.me/{{p.whatsapp
+                |replace('+','')
+                |replace(' ','')
+                |replace('-','')}}"
+        >
+            💬 WhatsApp
+        </a>
+        {% endif %}
+
+        {% if p.email %}
+        <a class="btn action-btn" href="mailto:{{p.email}}">
+            ✉️ Email
+        </a>
+        {% endif %}
+
+        {% if p.address %}
+        <a
+            class="btn action-btn"
+            target="_blank"
+            href="https://www.google.com/maps/search/?api=1&query={{p.address|urlencode}}"
+        >
+            📍 Cómo llegar
+        </a>
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<details class="card commercial-details">
+
+<summary>
+    <strong>✏️ Editar ficha comercial</strong>
+</summary>
+
+<form
+    class="form form-grid"
+    method="post"
+    action="/prospects/{{p.id}}/edit"
+>
+
+    <label>
+        Empresa
+        <input
+            name="company_name"
+            value="{{p.company_name or ''}}"
+            required
+        >
+    </label>
+
+    <label>
+        Sucursal
+        <input
+            name="branch_name"
+            value="{{p.branch_name or ''}}"
+        >
+    </label>
+
+    <label>
+        Rubro
+        <input
+            name="industry"
+            value="{{p.industry or ''}}"
+        >
+    </label>
+
+    <label>
+        Subrubro
+        <input
+            name="subindustry"
+            value="{{p.subindustry or ''}}"
+        >
+    </label>
+
+    <label>
+        Comuna
+        <input
+            name="commune"
+            value="{{p.commune or ''}}"
+        >
+    </label>
+
+    <label>
+        Ciudad
+        <input
+            name="city"
+            value="{{p.city or ''}}"
+        >
+    </label>
+
+    <label class="full-width">
+        Dirección
+        <input
+            name="address"
+            value="{{p.address or ''}}"
+        >
+    </label>
+
+    <label>
+        Teléfono
+        <input
+            name="phone"
+            value="{{p.phone or ''}}"
+        >
+    </label>
+
+    <label>
+        WhatsApp
+        <input
+            name="whatsapp"
+            value="{{p.whatsapp or ''}}"
+        >
+    </label>
+
+    <label>
+        Email
+        <input
+            type="email"
+            name="email"
+            value="{{p.email or ''}}"
+        >
+    </label>
+
+    <label>
+        Instagram
+        <input
+            name="instagram"
+            value="{{p.instagram or ''}}"
+        >
+    </label>
+
+    <label class="full-width">
+        Sitio web
+        <input
+            name="website"
+            value="{{p.website or ''}}"
+        >
+    </label>
+
+    <label>
+        Potencial
+        <select name="potential">
+            <option value="">Sin definir</option>
+            <option value="Alto"
+                {% if p.potential == "Alto" %}selected{% endif %}>
+                Alto
+            </option>
+            <option value="Medio"
+                {% if p.potential == "Medio" %}selected{% endif %}>
+                Medio
+            </option>
+            <option value="Bajo"
+                {% if p.potential == "Bajo" %}selected{% endif %}>
+                Bajo
+            </option>
+        </select>
+    </label>
+
+    <label>
+        Responsable
+        <input
+            name="owner"
+            value="{{p.owner or ''}}"
+            placeholder="Vendedor responsable"
+        >
+    </label>
+
+    <label class="full-width">
+        Notas comerciales
+        <textarea
+            name="notes"
+            rows="4"
+        >{{p.notes or ''}}</textarea>
+    </label>
+
+    <button
+        class="btn btn-primary full-width"
+        type="submit"
+    >
+        Guardar ficha
+    </button>
+
+</form>
+
+</details>
+
+
+<!-- ===================================================== -->
+<!-- CONTACTOS -->
+<!-- ===================================================== -->
+
+<h2 id="contactos">Personas de contacto</h2>
+
+<div class="list">
+
+{% for c in p.contacts %}
+
+<div class="card">
+
+    <div class="row">
+
+        <div>
+
+            <strong>{{c.name}}</strong>
+
+            {% if c.role %}
+            <div class="muted">{{c.role}}</div>
+            {% endif %}
+
+            {% if c.phone %}
+            <div>
+                📞
+                <a href="tel:{{c.phone}}">
+                    {{c.phone}}
+                </a>
+            </div>
+            {% endif %}
+
+            {% if c.email %}
+            <div>
+                ✉️
+                <a href="mailto:{{c.email}}">
+                    {{c.email}}
+                </a>
+            </div>
+            {% endif %}
+
+            {% if c.instagram %}
+            <div>📷 {{c.instagram}}</div>
+            {% endif %}
+
+            {% if c.notes %}
+            <div class="muted">{{c.notes}}</div>
+            {% endif %}
+
+        </div>
+
+        <form
+            method="post"
+            action="/contacts/{{c.id}}/delete"
+            onsubmit="return confirm('¿Eliminar este contacto?');"
+        >
+            <button
+                class="btn btn-small btn-danger"
+                type="submit"
+            >
+                Eliminar
+            </button>
+        </form>
+
+    </div>
+
+</div>
+
+{% else %}
+
+<div class="card muted">
+    Todavía no hay personas de contacto.
+</div>
+
+{% endfor %}
+
+</div>
+
+
+<details class="card commercial-details">
+
+<summary>
+    <strong>➕ Agregar persona de contacto</strong>
+</summary>
+
+<form
+    class="form form-grid"
+    method="post"
+    action="/prospects/{{p.id}}/contacts"
+>
+
+    <label>
+        Nombre
+        <input
+            name="name"
+            required
+            placeholder="Nombre y apellido"
+        >
+    </label>
+
+    <label>
+        Cargo
+        <input
+            name="role"
+            placeholder="Chef, compras, administrador..."
+        >
+    </label>
+
+    <label>
+        Teléfono
+        <input name="phone">
+    </label>
+
+    <label>
+        Email
+        <input
+            name="email"
+            type="email"
+        >
+    </label>
+
+    <label>
+        Instagram
+        <input name="instagram">
+    </label>
+
+    <label class="full-width">
+        Notas
+        <textarea
+            name="notes"
+            rows="3"
+        ></textarea>
+    </label>
+
+    <button
+        class="btn btn-primary full-width"
+        type="submit"
+    >
+        Agregar contacto
+    </button>
+
+</form>
+
+</details>
+
+
+<!-- ===================================================== -->
+<!-- GESTIONES -->
+<!-- ===================================================== -->
+
+<h2 id="gestiones">Registrar gestión</h2>
+
+<form
+    class="form card"
+    method="post"
+    action="/prospects/{{p.id}}/activities"
+>
+
+    <label>
+        Tipo de gestión
+        <select name="activity_type" required>
+            <option value="Llamada">📞 Llamada</option>
+            <option value="WhatsApp">💬 WhatsApp</option>
+            <option value="Email">✉️ Email</option>
+            <option value="Visita">📍 Visita</option>
+            <option value="Reunión">🤝 Reunión</option>
+            <option value="Cotización">🧾 Cotización</option>
+            <option value="Otro">Otro</option>
+        </select>
+    </label>
+
+    <label>
+        Resultado
+        <textarea
+            name="result"
+            rows="3"
+            placeholder="Ej: Hablé con administrador. Interesado en Pulled Pork."
+        ></textarea>
+    </label>
+
+    <label>
+        Próxima acción
+        <input
+            name="next_action"
+            placeholder="Ej: llamar para confirmar prueba"
+        >
+    </label>
+
+    <label>
+        Fecha próxima acción
+        <input
+            name="next_action_at"
+            type="datetime-local"
+        >
+    </label>
+
+    <button
+        class="btn btn-primary"
+        type="submit"
+    >
+        Guardar gestión
+    </button>
+
+</form>
+
+
+<h2>Historial de gestiones</h2>
+
+<div class="list">
+
+{% for a in p.activities|sort(attribute='happened_at', reverse=true) %}
+
+<div class="card">
+
+    <div class="row">
+
+        <div>
+
+            <strong>{{a.activity_type}}</strong>
+
+            <div class="muted">
+                {{a.happened_at.strftime('%d/%m/%Y %H:%M')}}
+            </div>
+
+        </div>
+
+        {% if a.next_action_at %}
+        <span class="pill">
+            Próxima:
+            {{a.next_action_at.strftime('%d/%m %H:%M')}}
+        </span>
+        {% endif %}
+
+    </div>
+
+    {% if a.result %}
+    <p>{{a.result}}</p>
+    {% endif %}
+
+    {% if a.next_action %}
+    <p>
+        <strong>Próxima acción:</strong>
+        {{a.next_action}}
+    </p>
+    {% endif %}
+
+</div>
+
+{% else %}
+
+<div class="card muted">
+    Todavía no hay gestiones registradas.
+</div>
+
+{% endfor %}
+
+</div>
+
+
 <h2>Nueva cotización rápida</h2><form class="form card" method="post" action="/prospects/{{p.id}}/quotes"><select name="product_id" required>{% for x in products %}<option value="{{x.id}}">{{x.category}} · {{x.name}} · {{x.price_gross_clp|clp}}</option>{% endfor %}</select><input name="quantity_kg" type="number" min="0.001" step="0.001" placeholder="Cantidad kg" required><input name="unit_price_gross_clp" type="number" step="1" placeholder="Precio final/kg (opcional; usa lista por defecto)"><textarea name="notes" placeholder="Notas"></textarea><button class="btn btn-primary">Crear cotización</button></form><h2>Cotizaciones</h2><div class="list">{% for q in quotes %}<a class="card row" href="/quotes/{{q.id}}"><div><strong>{{q.quote_number}}</strong><div class="muted">Válida hasta {{q.valid_until}}</div></div><div class="money">{{q.total_clp|clp}}</div></a>{% else %}<div class="card muted">Aún no hay cotizaciones.</div>{% endfor %}</div>
 <h2>Administración</h2>
 

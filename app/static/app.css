@@ -13,3 +13,66 @@
 .danger-zone{
     border:1px solid #efc5c1;
 }
+
+
+/* Ficha comercial */
+
+.quick-actions{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+}
+
+.action-btn{
+    text-align:center;
+    text-decoration:none;
+}
+
+.commercial-details{
+    margin-top:12px;
+}
+
+.commercial-details summary{
+    cursor:pointer;
+    padding:4px 0;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+    margin-top:16px;
+}
+
+.form-grid label{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-weight:600;
+}
+
+.full-width{
+    grid-column:1 / -1;
+}
+
+.btn-small{
+    padding:8px 12px;
+    font-size:12px;
+}
+
+@media (max-width:700px){
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .full-width{
+        grid-column:auto;
+    }
+
+    .quick-actions{
+        grid-template-columns:1fr 1fr;
+    }
+
+}
+
