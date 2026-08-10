@@ -11,6 +11,7 @@ from app.db import get_db
 from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem
 from app.services.google_places import search_places
 from app.services.pricing import split_gross
+from app.services.tavily_enrichment import enrich_company
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -70,6 +71,52 @@ def prospect_detail(prospect_id: int, request: Request, db: Session = Depends(ge
     quotes = db.scalars(select(Quote).where(Quote.prospect_id == prospect_id).order_by(Quote.created_at.desc())).all()
     products = db.scalars(select(Product).where(Product.active.is_(True)).order_by(Product.category, Product.name)).all()
     return templates.TemplateResponse(request, "prospect_detail.html", {"p": p, "quotes": quotes, "products": products, "statuses": list(ProspectStatus)})
+
+
+
+@router.post("/prospects/{prospect_id}/enrich", response_class=HTMLResponse)
+async def prospect_enrich(
+    prospect_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    p = db.get(Prospect, prospect_id)
+
+    quotes = db.scalars(
+        select(Quote)
+        .where(Quote.prospect_id == prospect_id)
+        .order_by(Quote.created_at.desc())
+    ).all()
+
+    products = db.scalars(
+        select(Product)
+        .where(Product.active.is_(True))
+        .order_by(Product.category, Product.name)
+    ).all()
+
+    enrichment = None
+    enrich_error = None
+
+    try:
+        enrichment = await enrich_company(
+            p.company_name,
+            p.website,
+        )
+    except Exception as e:
+        enrich_error = str(e)
+
+    return templates.TemplateResponse(
+        request,
+        "prospect_detail.html",
+        {
+            "p": p,
+            "quotes": quotes,
+            "products": products,
+            "statuses": list(ProspectStatus),
+            "enrichment": enrichment,
+            "enrich_error": enrich_error,
+        },
+    )
 
 
 @router.post("/prospects/{prospect_id}/status")
