@@ -1,1 +1,40 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}Ramal CRM{% endblock %}</title><link rel="stylesheet" href="/static/app.css"></head><body><header class="topbar"><a class="brand" href="/">RAMAL CRM</a><a href="/web-search">🔎 Buscar</a></header><main class="container">{% block content %}{% endblock %}</main></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ramal CRM</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container topbar">
+            <a href="/" class="brand">
+                <div class="brand-symbol">❦</div>
+                <div>
+                    <div class="brand-title">Ramal CRM</div>
+                    <div class="brand-subtitle">Comer rico, fácil y sin cocinar</div>
+                </div>
+            </a>
+
+            <nav class="main-nav">
+                <a href="/">Inicio</a>
+                <a href="/web-search">Buscar</a>
+                <a href="/prospects">Prospectos</a>
+                <a href="/products">Productos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page-shell">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>
