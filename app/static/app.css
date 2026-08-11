@@ -76,3 +76,202 @@
 
 }
 
+
+
+/* =========================================
+   Bandeja comercial de prospectos
+========================================= */
+
+.commercial-shortcuts{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin:16px 0;
+}
+
+.shortcut{
+    display:block;
+    padding:13px;
+    border-radius:12px;
+    background:#eef2ee;
+    text-align:center;
+    text-decoration:none;
+    color:#173d2a;
+    font-weight:700;
+}
+
+.shortcut.active{
+    background:#2f7854;
+    color:white;
+}
+
+
+.filter-panel{
+    margin-bottom:18px;
+}
+
+.search-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    margin-bottom:14px;
+}
+
+.commercial-search{
+    width:100%;
+}
+
+.filter-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:14px;
+}
+
+.filter-grid label{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    font-size:13px;
+    font-weight:600;
+}
+
+
+.prospect-commercial-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.commercial-prospect{
+    padding:16px;
+}
+
+.commercial-prospect-main{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:16px;
+    align-items:center;
+}
+
+.prospect-title-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.prospect-company{
+    font-size:17px;
+    font-weight:800;
+    color:#173d2a;
+}
+
+.prospect-meta{
+    margin-top:4px;
+    font-size:13px;
+    color:#67726c;
+}
+
+.prospect-contact-row{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-top:8px;
+    font-size:13px;
+}
+
+.prospect-contact-row a{
+    color:#315c48;
+}
+
+.prospect-card-actions{
+    display:flex;
+    gap:7px;
+    align-items:center;
+}
+
+
+.status-pill{
+    display:inline-block;
+    padding:4px 9px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:700;
+    background:#e9eeea;
+}
+
+.status-follow_up{
+    background:#fff0d5;
+}
+
+.status-interested{
+    background:#dcefe4;
+}
+
+.status-customer{
+    background:#d5eadc;
+}
+
+.status-lost,
+.status-do_not_contact{
+    background:#f3dddd;
+}
+
+
+.next-action{
+    margin-top:9px;
+    font-size:13px;
+    font-weight:600;
+}
+
+.next-action.overdue{
+    color:#a92a22;
+}
+
+.next-action.today{
+    color:#a86600;
+}
+
+.next-action.upcoming{
+    color:#315c48;
+}
+
+.next-action.no-action{
+    color:#8a928d;
+    font-weight:400;
+}
+
+
+@media(max-width:800px){
+
+    .commercial-shortcuts{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .filter-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+}
+
+
+@media(max-width:600px){
+
+    .search-row{
+        grid-template-columns:1fr;
+    }
+
+    .filter-grid{
+        grid-template-columns:1fr;
+    }
+
+    .commercial-prospect-main{
+        grid-template-columns:1fr;
+    }
+
+    .prospect-card-actions{
+        justify-content:flex-start;
+    }
+
+}

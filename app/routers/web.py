@@ -1,10 +1,11 @@
+import datetime as dt
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from sqlalchemy import func, select, or_
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -45,13 +46,143 @@ def product_list(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/prospects", response_class=HTMLResponse)
-def prospect_list(request: Request, status: str | None = None, db: Session = Depends(get_db)):
-    stmt = select(Prospect).order_by(Prospect.next_action_at.asc().nullslast(), Prospect.created_at.desc())
+def prospects(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    industry: str = "",
+    potential: str = "",
+    followup: str = "",
+    db: Session = Depends(get_db),
+):
+    stmt = select(Prospect)
+
+    # --------------------------------------------------
+    # BUSCADOR
+    # --------------------------------------------------
+    if q.strip():
+        term = f"%{q.strip()}%"
+        stmt = stmt.where(
+            or_(
+                Prospect.company_name.ilike(term),
+                Prospect.email.ilike(term),
+                Prospect.phone.ilike(term),
+                Prospect.instagram.ilike(term),
+                Prospect.commune.ilike(term),
+            )
+        )
+
+    # --------------------------------------------------
+    # ESTADO
+    # --------------------------------------------------
     if status:
-        try: stmt = stmt.where(Prospect.status == ProspectStatus(status))
-        except ValueError: pass
-    prospects = db.scalars(stmt).all()
-    return templates.TemplateResponse(request, "prospects.html", {"prospects": prospects, "statuses": list(ProspectStatus), "status_filter": status})
+        try:
+            stmt = stmt.where(
+                Prospect.status == ProspectStatus(status)
+            )
+        except ValueError:
+            pass
+
+    # --------------------------------------------------
+    # RUBRO
+    # --------------------------------------------------
+    if industry:
+        stmt = stmt.where(
+            Prospect.industry == industry
+        )
+
+    # --------------------------------------------------
+    # POTENCIAL
+    # --------------------------------------------------
+    if potential:
+        stmt = stmt.where(
+            Prospect.potential == potential
+        )
+
+    # --------------------------------------------------
+    # SEGUIMIENTOS
+    # --------------------------------------------------
+    now = dt.datetime.now()
+    today_start = now.replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    tomorrow = today_start + dt.timedelta(days=1)
+
+    if followup == "overdue":
+        stmt = stmt.where(
+            Prospect.next_action_at.is_not(None),
+            Prospect.next_action_at < now,
+        )
+
+    elif followup == "today":
+        stmt = stmt.where(
+            Prospect.next_action_at >= today_start,
+            Prospect.next_action_at < tomorrow,
+        )
+
+    elif followup == "upcoming":
+        stmt = stmt.where(
+            Prospect.next_action_at >= tomorrow,
+        )
+
+    elif followup == "no_action":
+        stmt = stmt.where(
+            Prospect.next_action_at.is_(None)
+        )
+
+    # Primero los que tienen próxima gestión
+    stmt = stmt.order_by(
+        Prospect.next_action_at.asc().nullslast(),
+        Prospect.company_name.asc(),
+    )
+
+    prospect_list = db.scalars(stmt).all()
+
+    industries = db.scalars(
+        select(Prospect.industry)
+        .where(Prospect.industry.is_not(None))
+        .distinct()
+        .order_by(Prospect.industry)
+    ).all()
+
+    industries = [
+        x for x in industries
+        if x and x.strip()
+    ]
+
+    potentials = db.scalars(
+        select(Prospect.potential)
+        .where(Prospect.potential.is_not(None))
+        .distinct()
+        .order_by(Prospect.potential)
+    ).all()
+
+    potentials = [
+        x for x in potentials
+        if x and x.strip()
+    ]
+
+    return templates.TemplateResponse(
+        request,
+        "prospects.html",
+        {
+            "prospects": prospect_list,
+            "statuses": list(ProspectStatus),
+            "status_filter": status,
+            "q": q,
+            "industry_filter": industry,
+            "potential_filter": potential,
+            "followup_filter": followup,
+            "industries": industries,
+            "potentials": potentials,
+            "now": now,
+            "today_start": today_start,
+            "tomorrow": tomorrow,
+        },
+    )
 
 
 @router.post("/prospects")

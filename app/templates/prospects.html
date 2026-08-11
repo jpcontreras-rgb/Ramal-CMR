@@ -1,1 +1,350 @@
-{% extends "base.html" %}{% block content %}<div class="row"><h1>Prospectos</h1><a class="btn btn-primary" href="/web-search">+ Buscar</a></div><form class="form card" method="get"><select name="status" onchange="this.form.submit()"><option value="">Todos los estados</option>{% for s in statuses %}<option {% if status_filter==s.value %}selected{% endif %}>{{s.value}}</option>{% endfor %}</select></form><div class="list" style="margin-top:12px">{% for p in prospects %}<a class="card row" href="/prospects/{{p.id}}"><div><strong>{{p.company_name}}</strong><div class="muted">{{p.industry or 'Sin rubro'}} · {{p.commune or p.city or 'Sin sector'}}</div><div class="muted">{{p.phone or p.email or p.instagram or ''}}</div></div><span class="pill">{{p.status.value}}</span></a>{% else %}<div class="card">Sin resultados.</div>{% endfor %}</div>{% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+    <div>
+        <h1>Bandeja comercial</h1>
+        <div class="muted">
+            {{ prospects|length }} prospectos encontrados
+        </div>
+    </div>
+
+    <a class="btn btn-primary" href="/web-search">
+        + Buscar prospectos
+    </a>
+</div>
+
+
+<!-- ============================= -->
+<!-- FILTROS RÁPIDOS -->
+<!-- ============================= -->
+
+<div class="commercial-shortcuts">
+
+    <a
+        class="shortcut {% if followup_filter == 'overdue' %}active{% endif %}"
+        href="/prospects?followup=overdue"
+    >
+        🔴 Vencidos
+    </a>
+
+    <a
+        class="shortcut {% if followup_filter == 'today' %}active{% endif %}"
+        href="/prospects?followup=today"
+    >
+        🟠 Para hoy
+    </a>
+
+    <a
+        class="shortcut {% if followup_filter == 'upcoming' %}active{% endif %}"
+        href="/prospects?followup=upcoming"
+    >
+        📅 Próximos
+    </a>
+
+    <a
+        class="shortcut {% if followup_filter == 'no_action' %}active{% endif %}"
+        href="/prospects?followup=no_action"
+    >
+        ⚪ Sin seguimiento
+    </a>
+
+</div>
+
+
+<!-- ============================= -->
+<!-- BUSCADOR Y FILTROS -->
+<!-- ============================= -->
+
+<form class="card filter-panel" method="get">
+
+    <div class="search-row">
+
+        <input
+            class="commercial-search"
+            name="q"
+            value="{{ q }}"
+            placeholder="🔎 Buscar empresa, email, teléfono, Instagram o comuna"
+        >
+
+        <button
+            class="btn btn-primary"
+            type="submit"
+        >
+            Buscar
+        </button>
+
+    </div>
+
+    <div class="filter-grid">
+
+        <label>
+            Estado
+            <select name="status">
+                <option value="">Todos</option>
+
+                {% for s in statuses %}
+                <option
+                    value="{{s.value}}"
+                    {% if status_filter == s.value %}selected{% endif %}
+                >
+                    {{s.value}}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+
+
+        <label>
+            Rubro
+            <select name="industry">
+                <option value="">Todos</option>
+
+                {% for item in industries %}
+                <option
+                    value="{{item}}"
+                    {% if industry_filter == item %}selected{% endif %}
+                >
+                    {{item}}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+
+
+        <label>
+            Potencial
+            <select name="potential">
+                <option value="">Todos</option>
+
+                {% for item in potentials %}
+                <option
+                    value="{{item}}"
+                    {% if potential_filter == item %}selected{% endif %}
+                >
+                    {{item}}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+
+
+        <label>
+            Próxima gestión
+            <select name="followup">
+
+                <option value="">Todas</option>
+
+                <option
+                    value="overdue"
+                    {% if followup_filter == "overdue" %}selected{% endif %}
+                >
+                    Vencidas
+                </option>
+
+                <option
+                    value="today"
+                    {% if followup_filter == "today" %}selected{% endif %}
+                >
+                    Hoy
+                </option>
+
+                <option
+                    value="upcoming"
+                    {% if followup_filter == "upcoming" %}selected{% endif %}
+                >
+                    Próximas
+                </option>
+
+                <option
+                    value="no_action"
+                    {% if followup_filter == "no_action" %}selected{% endif %}
+                >
+                    Sin seguimiento
+                </option>
+
+            </select>
+        </label>
+
+    </div>
+
+
+    <div class="row">
+
+        <button class="btn btn-primary" type="submit">
+            Aplicar filtros
+        </button>
+
+        <a class="btn" href="/prospects">
+            Limpiar
+        </a>
+
+    </div>
+
+</form>
+
+
+<!-- ============================= -->
+<!-- LISTA COMERCIAL -->
+<!-- ============================= -->
+
+<div class="prospect-commercial-list">
+
+{% for p in prospects %}
+
+<div class="card commercial-prospect">
+
+    <div class="commercial-prospect-main">
+
+        <div>
+
+            <div class="prospect-title-row">
+
+                <a
+                    class="prospect-company"
+                    href="/prospects/{{p.id}}"
+                >
+                    {{p.company_name}}
+                </a>
+
+                <span class="status-pill status-{{p.status.name|lower}}">
+                    {{p.status.value}}
+                </span>
+
+            </div>
+
+
+            <div class="prospect-meta">
+
+                {% if p.industry %}
+                    {{p.industry}}
+                {% else %}
+                    Sin rubro
+                {% endif %}
+
+                {% if p.commune %}
+                    · {{p.commune}}
+                {% endif %}
+
+                {% if p.potential %}
+                    · Potencial:
+                    <strong>{{p.potential}}</strong>
+                {% endif %}
+
+            </div>
+
+
+            <div class="prospect-contact-row">
+
+                {% if p.phone %}
+                <a href="tel:{{p.phone}}">
+                    📞 {{p.phone}}
+                </a>
+                {% endif %}
+
+                {% if p.email %}
+                <a href="mailto:{{p.email}}">
+                    ✉️ {{p.email}}
+                </a>
+                {% endif %}
+
+                {% if p.instagram %}
+                <span>
+                    📷 {{p.instagram}}
+                </span>
+                {% endif %}
+
+            </div>
+
+
+            {% if p.next_action_at %}
+
+                {% if p.next_action_at < now %}
+
+                <div class="next-action overdue">
+                    🔴 Seguimiento vencido:
+                    <strong>
+                        {{p.next_action_at.strftime('%d/%m/%Y %H:%M')}}
+                    </strong>
+                </div>
+
+                {% elif p.next_action_at < tomorrow %}
+
+                <div class="next-action today">
+                    🟠 Seguimiento hoy:
+                    <strong>
+                        {{p.next_action_at.strftime('%H:%M')}}
+                    </strong>
+                </div>
+
+                {% else %}
+
+                <div class="next-action upcoming">
+                    📅 Próximo seguimiento:
+                    <strong>
+                        {{p.next_action_at.strftime('%d/%m/%Y %H:%M')}}
+                    </strong>
+                </div>
+
+                {% endif %}
+
+            {% else %}
+
+            <div class="next-action no-action">
+                Sin próxima gestión programada
+            </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="prospect-card-actions">
+
+            {% if p.phone %}
+            <a
+                class="btn btn-small"
+                href="tel:{{p.phone}}"
+            >
+                📞
+            </a>
+            {% endif %}
+
+            {% if p.whatsapp %}
+            <a
+                class="btn btn-small"
+                target="_blank"
+                href="https://wa.me/{{p.whatsapp
+                    |replace('+','')
+                    |replace(' ','')
+                    |replace('-','')}}"
+            >
+                💬
+            </a>
+            {% endif %}
+
+            <a
+                class="btn btn-primary btn-small"
+                href="/prospects/{{p.id}}"
+            >
+                Abrir
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% else %}
+
+<div class="card">
+    No se encontraron prospectos con estos filtros.
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}
