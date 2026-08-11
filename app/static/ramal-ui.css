@@ -1,0 +1,223 @@
+/* =====================================================
+   RAMAL CRM — UI PRINCIPAL
+   ===================================================== */
+
+.ramal-header{
+    width:100% !important;
+    position:sticky !important;
+    top:0 !important;
+    z-index:100 !important;
+
+    background:#f7f2e9 !important;
+    border-top:3px solid #3f4b32 !important;
+    border-bottom:1px solid #ddd3c5 !important;
+
+    box-shadow:0 3px 14px rgba(47,57,39,.045) !important;
+}
+
+.ramal-header-inner{
+    min-height:74px !important;
+    padding:8px 0 !important;
+
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+
+    gap:24px !important;
+}
+
+.ramal-brand{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+
+    gap:10px !important;
+
+    text-decoration:none !important;
+    color:#34402b !important;
+
+    flex:0 0 auto !important;
+}
+
+.ramal-brand *{
+    text-decoration:none !important;
+}
+
+.ramal-brand-mark{
+    width:32px !important;
+    height:32px !important;
+
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+
+    border-radius:50% !important;
+    border:1px solid #cfc5b7 !important;
+
+    background:#eee6da !important;
+    color:#425036 !important;
+
+    font-size:16px !important;
+    line-height:1 !important;
+}
+
+.ramal-brand-copy{
+    display:block !important;
+}
+
+.ramal-brand-main{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+}
+
+.ramal-wordmark{
+    font-family:Georgia, "Times New Roman", serif !important;
+
+    font-size:27px !important;
+    line-height:1 !important;
+
+    font-weight:600 !important;
+
+    letter-spacing:-.7px !important;
+
+    color:#3f4b32 !important;
+}
+
+.ramal-crm{
+    display:inline-flex !important;
+    align-items:center !important;
+
+    padding:3px 7px !important;
+
+    border-radius:999px !important;
+
+    background:#3f4b32 !important;
+    color:#fff !important;
+
+    font-family:Arial, sans-serif !important;
+
+    font-size:9px !important;
+    line-height:1 !important;
+
+    font-weight:700 !important;
+    letter-spacing:1px !important;
+}
+
+.ramal-tagline{
+    margin-top:4px !important;
+
+    font-family:Arial, sans-serif !important;
+
+    font-size:8px !important;
+    line-height:1.1 !important;
+
+    font-weight:600 !important;
+
+    letter-spacing:1.45px !important;
+
+    color:#7e796f !important;
+
+    text-decoration:none !important;
+}
+
+.ramal-nav{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+
+    gap:4px !important;
+
+    margin:0 !important;
+}
+
+.ramal-nav a{
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+
+    min-height:38px !important;
+
+    padding:0 13px !important;
+
+    border-radius:10px !important;
+
+    font-family:Arial, sans-serif !important;
+
+    font-size:13px !important;
+    line-height:1 !important;
+
+    font-weight:600 !important;
+
+    color:#394433 !important;
+
+    text-decoration:none !important;
+
+    white-space:nowrap !important;
+}
+
+.ramal-nav a:hover{
+    background:#e9e1d5 !important;
+    color:#303b28 !important;
+
+    text-decoration:none !important;
+}
+
+/* El contenido no se pega al header */
+.page-shell{
+    padding-top:30px !important;
+}
+
+
+/* ==========================
+   TABLET / MÓVIL
+   ========================== */
+
+@media(max-width:760px){
+
+    .ramal-header-inner{
+        min-height:auto !important;
+
+        padding:11px 0 8px !important;
+
+        flex-direction:column !important;
+        align-items:flex-start !important;
+
+        gap:9px !important;
+    }
+
+    .ramal-wordmark{
+        font-size:25px !important;
+    }
+
+    .ramal-tagline{
+        font-size:7.5px !important;
+    }
+
+    .ramal-nav{
+        width:100% !important;
+
+        overflow-x:auto !important;
+
+        gap:6px !important;
+
+        padding-bottom:3px !important;
+
+        scrollbar-width:none;
+    }
+
+    .ramal-nav::-webkit-scrollbar{
+        display:none;
+    }
+
+    .ramal-nav a{
+        min-height:34px !important;
+
+        padding:0 11px !important;
+
+        background:#ede6db !important;
+
+        font-size:12px !important;
+    }
+}
