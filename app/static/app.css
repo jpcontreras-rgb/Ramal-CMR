@@ -642,3 +642,800 @@ tr:last-child td{
         border:1px solid var(--line);
     }
 }
+
+
+/* ==========================================================
+   RAMAL CRM — IDENTIDAD VISUAL PREMIUM
+   ========================================================== */
+
+:root{
+    --ramal-cream:#f5efe4;
+    --ramal-paper:#fbf8f2;
+    --ramal-paper-2:#eee5d7;
+    --ramal-olive:#3f4a30;
+    --ramal-olive-dark:#303a25;
+    --ramal-olive-light:#697457;
+    --ramal-kraft:#c5a77d;
+    --ramal-kraft-light:#eadcc8;
+    --ramal-terracotta:#bf7358;
+    --ramal-ink:#263127;
+    --ramal-muted:#73776f;
+    --ramal-line:#ddd3c5;
+}
+
+
+/* ---------- BODY ---------- */
+
+html{
+    background:var(--ramal-cream);
+}
+
+body{
+    background:
+        radial-gradient(
+            circle at 15% -10%,
+            rgba(197,167,125,.14),
+            transparent 30%
+        ),
+        linear-gradient(
+            180deg,
+            #f8f4ec 0%,
+            #f4eee5 100%
+        ) !important;
+
+    color:var(--ramal-ink) !important;
+    font-family:'DM Sans', Inter, system-ui, sans-serif !important;
+}
+
+
+/* ---------- HEADER ---------- */
+
+.ramal-header{
+    position:sticky;
+    top:0;
+    z-index:100;
+
+    background:rgba(248,244,236,.96);
+
+    border-top:4px solid var(--ramal-olive);
+    border-bottom:1px solid var(--ramal-line);
+
+    backdrop-filter:blur(12px);
+
+    box-shadow:
+        0 4px 20px rgba(53,61,44,.04);
+}
+
+
+.ramal-header-inner{
+    min-height:92px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    gap:28px;
+}
+
+
+.ramal-brand{
+    display:flex;
+    align-items:center;
+
+    gap:13px;
+
+    color:var(--ramal-olive-dark) !important;
+
+    text-decoration:none !important;
+}
+
+
+.ramal-brand:hover{
+    text-decoration:none !important;
+}
+
+
+.ramal-brand-mark{
+    width:42px;
+    height:42px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border:1px solid rgba(63,74,48,.18);
+    border-radius:50%;
+
+    font-family:Georgia, serif;
+    font-size:22px;
+
+    color:var(--ramal-olive);
+
+    background:#f3ebdf;
+}
+
+
+.ramal-brand-main{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+
+.ramal-wordmark{
+    font-family:'Playfair Display', Georgia, serif;
+
+    font-size:35px;
+    line-height:1;
+
+    font-weight:700;
+
+    letter-spacing:-1px;
+
+    color:var(--ramal-olive);
+}
+
+
+.ramal-crm{
+    padding:4px 8px;
+
+    border-radius:999px;
+
+    background:var(--ramal-olive);
+
+    color:white;
+
+    font-size:10px;
+    font-weight:700;
+
+    letter-spacing:1.4px;
+}
+
+
+.ramal-tagline{
+    margin-top:5px;
+
+    font-size:9px;
+    font-weight:600;
+
+    letter-spacing:2.3px;
+
+    color:#7c756c;
+}
+
+
+.ramal-nav{
+    display:flex;
+    align-items:center;
+
+    gap:5px;
+}
+
+
+.ramal-nav a{
+    padding:10px 14px;
+
+    border-radius:999px;
+
+    color:var(--ramal-ink) !important;
+
+    font-size:13px;
+    font-weight:600;
+
+    text-decoration:none !important;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        transform .2s ease;
+}
+
+
+.ramal-nav a:hover{
+    background:var(--ramal-olive);
+
+    color:white !important;
+
+    transform:translateY(-1px);
+}
+
+
+/* ---------- PAGE ---------- */
+
+.page-shell{
+    padding-top:38px !important;
+    padding-bottom:70px !important;
+}
+
+
+.page-shell > h1,
+.page-shell > .row h1{
+    font-family:'Playfair Display', Georgia, serif !important;
+
+    color:var(--ramal-olive-dark) !important;
+
+    letter-spacing:-1px;
+
+    margin-bottom:6px;
+}
+
+
+h2{
+    color:var(--ramal-olive-dark) !important;
+
+    letter-spacing:-.3px;
+}
+
+
+/* ---------- CARDS ---------- */
+
+.card{
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,253,249,.97),
+            rgba(251,248,242,.97)
+        ) !important;
+
+    border:1px solid var(--ramal-line) !important;
+
+    border-radius:18px !important;
+
+    box-shadow:
+        0 5px 18px rgba(51,57,45,.055) !important;
+}
+
+
+.card:hover{
+    border-color:#d3c6b4 !important;
+}
+
+
+/* ---------- BOTONES ---------- */
+
+.btn{
+    border-radius:12px !important;
+
+    min-height:42px;
+
+    font-family:'DM Sans', sans-serif !important;
+
+    font-weight:700 !important;
+
+    text-decoration:none !important;
+}
+
+
+.btn-primary{
+    background:var(--ramal-olive) !important;
+
+    color:white !important;
+
+    box-shadow:
+        0 4px 12px rgba(63,74,48,.14);
+}
+
+
+.btn-primary:hover{
+    background:var(--ramal-olive-dark) !important;
+}
+
+
+.btn-danger{
+    background:#a84535 !important;
+}
+
+
+/* ---------- FORMULARIOS ---------- */
+
+input,
+select,
+textarea{
+    background:#fffdf9 !important;
+
+    border:1px solid #d8cfc2 !important;
+
+    border-radius:11px !important;
+
+    min-height:44px;
+
+    font-family:'DM Sans', sans-serif !important;
+}
+
+
+input:focus,
+select:focus,
+textarea:focus{
+    border-color:var(--ramal-olive-light) !important;
+
+    box-shadow:
+        0 0 0 3px rgba(79,94,62,.10) !important;
+}
+
+
+/* ==========================================================
+   DASHBOARD
+   ========================================================== */
+
+.page-shell h1:first-child{
+    margin-bottom:24px;
+}
+
+
+.stat-card,
+.page-shell .card{
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease;
+}
+
+
+.stat-card:hover{
+    transform:translateY(-2px);
+}
+
+
+.stat-number{
+    font-family:'Playfair Display', Georgia, serif;
+
+    color:var(--ramal-olive) !important;
+
+    font-size:39px !important;
+}
+
+
+.dashboard-action{
+    border:1px solid var(--ramal-line) !important;
+
+    color:var(--ramal-olive-dark) !important;
+}
+
+
+.dashboard-action.primary{
+    background:
+        linear-gradient(
+            135deg,
+            #536044,
+            #3c482f
+        ) !important;
+
+    color:white !important;
+}
+
+
+/* ==========================================================
+   BANDEJA COMERCIAL
+   ========================================================== */
+
+.commercial-shortcuts{
+    margin:22px 0 18px !important;
+}
+
+
+.shortcut{
+    background:#f7f1e7 !important;
+
+    border:1px solid var(--ramal-line) !important;
+
+    box-shadow:none !important;
+
+    color:#53604a !important;
+}
+
+
+.shortcut:hover{
+    background:#eee6d9 !important;
+
+    text-decoration:none !important;
+}
+
+
+.shortcut.active{
+    background:var(--ramal-olive) !important;
+
+    color:white !important;
+}
+
+
+.filter-panel{
+    padding:20px !important;
+}
+
+
+.filter-panel .search-row{
+    display:grid !important;
+
+    grid-template-columns:minmax(0,1fr) auto !important;
+
+    gap:12px !important;
+}
+
+
+.filter-panel .filter-grid{
+    display:grid !important;
+
+    grid-template-columns:
+        repeat(4,minmax(0,1fr)) !important;
+
+    gap:14px !important;
+
+    margin-top:14px !important;
+}
+
+
+.filter-panel .filter-grid > label{
+    display:flex !important;
+
+    flex-direction:column !important;
+
+    gap:6px !important;
+
+    margin:0 !important;
+}
+
+
+.commercial-prospect{
+    position:relative;
+
+    overflow:hidden;
+
+    padding:20px !important;
+
+    border-left:4px solid transparent !important;
+}
+
+
+.commercial-prospect:hover{
+    border-left-color:var(--ramal-olive) !important;
+
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 8px 24px rgba(51,57,45,.08) !important;
+}
+
+
+.prospect-company{
+    font-size:18px !important;
+
+    color:var(--ramal-olive-dark) !important;
+
+    text-decoration:none !important;
+}
+
+
+.prospect-company:hover{
+    color:var(--ramal-olive-light) !important;
+}
+
+
+.prospect-meta{
+    margin-top:7px !important;
+}
+
+
+.prospect-contact-row{
+    margin-top:11px !important;
+}
+
+
+.prospect-contact-row a{
+    text-decoration:none !important;
+}
+
+
+.prospect-contact-row a:hover{
+    text-decoration:underline !important;
+}
+
+
+/* ---------- STATUS ---------- */
+
+.status-pill{
+    border:none !important;
+
+    font-size:11px !important;
+
+    letter-spacing:.1px;
+
+    text-decoration:none !important;
+}
+
+
+.status-follow_up{
+    background:#f4e2c4 !important;
+    color:#815515 !important;
+}
+
+
+.status-interested{
+    background:#dfe9d7 !important;
+    color:#425739 !important;
+}
+
+
+.status-new{
+    background:#eceae4 !important;
+    color:#5c625b !important;
+}
+
+
+.status-to_contact{
+    background:#ede6d8 !important;
+    color:#695d46 !important;
+}
+
+
+/* ---------- PRÓXIMAS ACCIONES ---------- */
+
+.next-action{
+    display:inline-flex;
+
+    margin-top:13px !important;
+
+    padding:7px 10px;
+
+    border-radius:9px;
+
+    background:#f2eee7;
+
+    font-size:12px !important;
+}
+
+
+.next-action.overdue{
+    background:#f6dfdb;
+
+    color:#9a3e31 !important;
+}
+
+
+.next-action.today{
+    background:#f8ead2;
+
+    color:#876019 !important;
+}
+
+
+.next-action.upcoming{
+    background:#e4eadf;
+
+    color:#43573c !important;
+}
+
+
+/* ==========================================================
+   FICHA PROSPECTO
+   ========================================================== */
+
+details.card{
+    padding:0 !important;
+}
+
+
+details.card summary{
+    padding:18px 20px !important;
+
+    cursor:pointer;
+
+    list-style:none;
+
+    color:var(--ramal-olive-dark);
+
+    font-weight:700;
+}
+
+
+details.card summary::-webkit-details-marker{
+    display:none;
+}
+
+
+details.card summary::before{
+    content:"+";
+
+    display:inline-flex;
+
+    margin-right:10px;
+
+    width:20px;
+    height:20px;
+
+    align-items:center;
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:var(--ramal-kraft-light);
+
+    color:var(--ramal-olive);
+
+    font-weight:800;
+}
+
+
+details[open].card summary::before{
+    content:"−";
+}
+
+
+details.card form{
+    padding:0 20px 20px;
+}
+
+
+.quick-actions{
+    display:flex !important;
+
+    flex-wrap:wrap;
+
+    gap:10px !important;
+}
+
+
+.quick-actions .btn{
+    min-width:130px;
+}
+
+
+/* ---------- CONTACTOS ---------- */
+
+#contactos + .list .card{
+    border-left:3px solid var(--ramal-kraft) !important;
+}
+
+
+/* ---------- INVESTIGACIÓN WEB ---------- */
+
+.page-shell h2 + .card form[action*="enrich"] .btn{
+    background:#637052 !important;
+}
+
+
+/* ==========================================================
+   PRODUCTOS
+   ========================================================== */
+
+table{
+    overflow:hidden;
+
+    border-radius:18px !important;
+
+    border:1px solid var(--ramal-line) !important;
+
+    background:#fffdf9 !important;
+
+    box-shadow:
+        0 5px 18px rgba(51,57,45,.05) !important;
+}
+
+
+th{
+    background:#eee5d7 !important;
+
+    color:#5a604f !important;
+
+    font-size:11px !important;
+
+    letter-spacing:1px !important;
+}
+
+
+td{
+    padding-top:15px !important;
+    padding-bottom:15px !important;
+}
+
+
+/* ==========================================================
+   FOOTER
+   ========================================================== */
+
+.ramal-footer{
+    margin-top:50px;
+
+    border-top:1px solid var(--ramal-line);
+
+    background:#eee6d9;
+
+    color:#77736c;
+}
+
+
+.ramal-footer .container{
+    min-height:70px;
+
+    display:flex;
+    align-items:center;
+
+    gap:10px;
+
+    font-size:11px;
+
+    letter-spacing:.5px;
+}
+
+
+.footer-brand{
+    font-family:'Playfair Display', Georgia, serif;
+
+    font-size:18px;
+
+    color:var(--ramal-olive);
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:800px){
+
+    .ramal-header-inner{
+        min-height:auto;
+
+        padding:15px 0;
+
+        flex-direction:column;
+
+        align-items:flex-start;
+    }
+
+
+    .ramal-nav{
+        width:100%;
+
+        overflow-x:auto;
+
+        padding-bottom:2px;
+    }
+
+
+    .ramal-nav a{
+        white-space:nowrap;
+
+        background:#efe8dc;
+    }
+
+
+    .filter-panel .filter-grid{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr)) !important;
+    }
+
+}
+
+
+@media(max-width:600px){
+
+    .ramal-wordmark{
+        font-size:30px;
+    }
+
+
+    .ramal-tagline{
+        letter-spacing:1.4px;
+    }
+
+
+    .filter-panel .search-row{
+        grid-template-columns:1fr !important;
+    }
+
+
+    .filter-panel .filter-grid{
+        grid-template-columns:1fr !important;
+    }
+
+
+    .commercial-prospect{
+        padding:16px !important;
+    }
+
+
+    .prospect-card-actions{
+        margin-top:6px;
+    }
+
+}
+

@@ -3,38 +3,78 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Ramal CRM</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/static/app.css">
 </head>
+
 <body>
 
-    <header class="site-header">
-        <div class="container topbar">
-            <a href="/" class="brand">
-                <div class="brand-symbol">❦</div>
-                <div>
-                    <div class="brand-title">Ramal CRM</div>
-                    <div class="brand-subtitle">Comer rico, fácil y sin cocinar</div>
+<header class="ramal-header">
+
+    <div class="container ramal-header-inner">
+
+        <a href="/" class="ramal-brand">
+
+            <div class="ramal-brand-mark">❦</div>
+
+            <div class="ramal-brand-copy">
+
+                <div class="ramal-brand-main">
+                    <span class="ramal-wordmark">Ramal</span>
+                    <span class="ramal-crm">CRM</span>
                 </div>
+
+                <div class="ramal-tagline">
+                    COMER RICO, FÁCIL Y SIN COCINAR
+                </div>
+
+            </div>
+
+        </a>
+
+
+        <nav class="ramal-nav">
+
+            <a href="/">
+                Inicio
             </a>
 
-            <nav class="main-nav">
-                <a href="/">Inicio</a>
-                <a href="/web-search">Buscar</a>
-                <a href="/prospects">Prospectos</a>
-                <a href="/products">Productos</a>
-            </nav>
-        </div>
-    </header>
+            <a href="/prospects">
+                Prospectos
+            </a>
 
-    <main class="container page-shell">
-        {% block content %}{% endblock %}
-    </main>
+            <a href="/web-search">
+                Buscar clientes
+            </a>
+
+            <a href="/products">
+                Productos
+            </a>
+
+        </nav>
+
+    </div>
+
+</header>
+
+
+<main class="container page-shell">
+    {% block content %}{% endblock %}
+</main>
+
+
+<footer class="ramal-footer">
+    <div class="container">
+        <span class="footer-brand">Ramal</span>
+        <span>CRM Comercial</span>
+    </div>
+</footer>
 
 </body>
 </html>
