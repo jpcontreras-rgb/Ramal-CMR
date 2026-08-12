@@ -173,3 +173,88 @@ class WebSource(Base):
     url: Mapped[str | None] = mapped_column(String(500))
     captured_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     data_json: Mapped[str | None] = mapped_column(Text)
+
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    username: Mapped[str] = mapped_column(
+        String(120),
+        unique=True,
+        index=True,
+    )
+
+    full_name: Mapped[str] = mapped_column(
+        String(160),
+    )
+
+    password_hash: Mapped[str] = mapped_column(
+        String(255),
+    )
+
+    # admin | sales
+    role: Mapped[str] = mapped_column(
+        String(20),
+        default="sales",
+        index=True,
+    )
+
+    # Para ventas.
+    # El administrador no tendrá límite comercial.
+    max_discount_pct: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2),
+        default=0,
+    )
+
+    active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        index=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+
+    last_login_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    prospect_id: Mapped[int | None] = mapped_column(
+        ForeignKey("prospects.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    event_type: Mapped[str] = mapped_column(
+        String(60),
+        index=True,
+    )
+
+    happened_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        index=True,
+    )
+
+    details_json: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )

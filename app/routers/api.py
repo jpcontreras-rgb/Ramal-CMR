@@ -10,9 +10,14 @@ from app.db import get_db
 from app.models import Product, Prospect, Quote, QuoteItem
 from app.services.google_places import search_places
 from app.services.pricing import split_gross
+from app.security import require_user
 from app.services.tavily_enrichment import enrich_company
 
-router = APIRouter(prefix="/api", tags=["api"])
+router = APIRouter(
+    prefix="/api",
+    tags=["api"],
+    dependencies=[Depends(require_user)],
+)
 
 
 class ProspectIn(BaseModel):

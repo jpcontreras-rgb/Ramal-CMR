@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Acceso · Ramal CRM</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/app.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/static/ramal-ui.css?v=2"
+    >
+
+</head>
+
+
+<body class="login-body">
+
+
+<div class="login-shell">
+
+    <div class="login-brand">
+
+        <div class="login-leaf">❦</div>
+
+        <div class="login-wordmark">
+            Ramal
+        </div>
+
+        <div class="login-subtitle">
+            CRM COMERCIAL
+        </div>
+
+    </div>
+
+
+    <div class="login-card">
+
+        <div class="login-eyebrow">
+            ACCESO AL SISTEMA
+        </div>
+
+        <h1>
+            Bienvenido
+        </h1>
+
+        <p class="muted">
+            Ingresa tus credenciales para continuar.
+        </p>
+
+
+        {% if error %}
+
+        <div class="login-error">
+            {{ error }}
+        </div>
+
+        {% endif %}
+
+
+        <form
+            method="post"
+            action="/login"
+        >
+
+            <label>
+                Usuario
+
+                <input
+                    name="username"
+                    autocomplete="username"
+                    required
+                    autofocus
+                >
+
+            </label>
+
+
+            <label>
+                Contraseña
+
+                <input
+                    type="password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                >
+
+            </label>
+
+
+            <button
+                class="btn btn-primary login-button"
+                type="submit"
+            >
+                Ingresar
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <div class="login-footer">
+        Comer rico, fácil y sin cocinar
+    </div>
+
+</div>
+
+
+</body>
+</html>

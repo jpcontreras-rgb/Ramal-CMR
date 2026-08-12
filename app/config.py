@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     debug: bool = False
     google_places_api_key: str | None = None
     tavily_api_key: str | None = None
+    timezone: str = "America/Santiago"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

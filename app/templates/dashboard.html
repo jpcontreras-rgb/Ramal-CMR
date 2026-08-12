@@ -1,1 +1,231 @@
-{% extends "base.html" %}{% block content %}<h1>Hoy</h1><div class="grid"><div class="card"><div class="metric">{{counts.prospects}}</div><div class="muted">Prospectos</div></div><div class="card"><div class="metric">{{counts.to_contact}}</div><div class="muted">Por contactar</div></div><div class="card"><div class="metric">{{counts.quotes_active}}</div><div class="muted">Cotizaciones activas</div></div><div class="card"><div class="metric">{{counts.followups}}</div><div class="muted">Seguimientos</div></div></div><div class="actions"><a class="btn btn-primary" href="/web-search">🔎 Buscar prospectos</a><a class="btn" href="/prospects">👥 Prospectos</a><a class="btn" href="/products">📦 Productos</a><a class="btn" href="/docs">⚙️ API</a></div><h2>Últimos prospectos</h2><div class="list">{% for p in recent %}<a class="card row" href="/prospects/{{p.id}}"><div><strong>{{p.company_name}}</strong><div class="muted">{{p.industry or 'Sin rubro'}} · {{p.commune or p.city or 'Sin sector'}}</div></div><span class="pill">{{p.status.value}}</span></a>{% else %}<div class="card muted">Todavía no hay prospectos. Usa “Buscar prospectos”.</div>{% endfor %}</div>{% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="dashboard-head">
+
+    <div>
+
+        <div class="dashboard-eyebrow">
+            RESUMEN COMERCIAL
+        </div>
+
+        <h1>Hoy</h1>
+
+        <div class="muted">
+            {{ today_label }}
+        </div>
+
+    </div>
+
+</div>
+
+
+<h2 class="dashboard-section-title">
+    Actividad de hoy
+</h2>
+
+
+<div class="daily-kpis">
+
+
+    <div class="daily-card">
+
+        <div class="daily-number">
+            {{daily.prospects_added}}
+        </div>
+
+        <div class="daily-label">
+            Prospectos agregados
+        </div>
+
+    </div>
+
+
+    <div class="daily-card">
+
+        <div class="daily-number">
+            {{daily.web_researched}}
+        </div>
+
+        <div class="daily-label">
+            Investigados en web
+        </div>
+
+    </div>
+
+
+    <div class="daily-card">
+
+        <div class="daily-number">
+            {{daily.manual_worked}}
+        </div>
+
+        <div class="daily-label">
+            Trabajados manualmente
+        </div>
+
+    </div>
+
+
+    <div class="daily-card">
+
+        <div class="daily-number">
+            {{daily.quotes_created}}
+        </div>
+
+        <div class="daily-label">
+            Cotizaciones generadas
+        </div>
+
+    </div>
+
+
+    <div class="daily-card sales-card">
+
+        <div class="daily-money">
+            {{daily.sales_total|clp}}
+        </div>
+
+        <div class="daily-label">
+            Ventas del día
+        </div>
+
+        <div class="daily-note">
+            {{daily.sales_count}}
+            pedidos
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<h2 class="dashboard-section-title">
+    Cartera comercial
+</h2>
+
+
+<div class="portfolio-kpis">
+
+    <div class="portfolio-card">
+
+        <strong>
+            {{counts.prospects}}
+        </strong>
+
+        <span>
+            Prospectos totales
+        </span>
+
+    </div>
+
+
+    <div class="portfolio-card">
+
+        <strong>
+            {{counts.to_contact}}
+        </strong>
+
+        <span>
+            Por contactar
+        </span>
+
+    </div>
+
+
+    <div class="portfolio-card">
+
+        <strong>
+            {{counts.followups}}
+        </strong>
+
+        <span>
+            Seguimientos pendientes
+        </span>
+
+    </div>
+
+
+    <div class="portfolio-card">
+
+        <strong>
+            {{counts.quotes_active}}
+        </strong>
+
+        <span>
+            Cotizaciones activas
+        </span>
+
+    </div>
+
+</div>
+
+
+<div class="dashboard-main-actions">
+
+    <a
+        class="dashboard-big-action primary"
+        href="/web-search"
+    >
+        Buscar nuevos prospectos
+    </a>
+
+    <a
+        class="dashboard-big-action"
+        href="/prospects"
+    >
+        Bandeja comercial
+    </a>
+
+</div>
+
+
+<h2 class="dashboard-section-title">
+    Últimos prospectos
+</h2>
+
+
+<div class="list">
+
+{% for p in recent %}
+
+<a
+    class="card row"
+    href="/prospects/{{p.id}}"
+>
+
+    <div>
+
+        <strong>
+            {{p.company_name}}
+        </strong>
+
+        <div class="muted">
+            {{p.industry or "Sin rubro"}}
+            ·
+            {{p.commune or "Sin sector"}}
+        </div>
+
+    </div>
+
+    <span class="pill">
+        {{p.status.value}}
+    </span>
+
+</a>
+
+{% else %}
+
+<div class="card muted">
+    Todavía no hay prospectos.
+</div>
+
+{% endfor %}
+
+</div>
+
+
+{% endblock %}

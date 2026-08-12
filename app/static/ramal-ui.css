@@ -221,3 +221,543 @@
         font-size:12px !important;
     }
 }
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+}
+
+.login-shell{
+    width:min(430px,100%);
+}
+
+.login-brand{
+    text-align:center;
+    margin-bottom:26px;
+}
+
+.login-leaf{
+    font-size:22px;
+    color:#465237;
+}
+
+.login-wordmark{
+    font-family:Georgia,serif;
+    font-size:52px;
+    color:#3f4b32;
+    line-height:1;
+}
+
+.login-subtitle{
+    margin-top:8px;
+    font-size:10px;
+    letter-spacing:2.5px;
+    color:#777268;
+}
+
+.login-card{
+    background:#fffdf9;
+    border:1px solid #ddd3c5;
+    border-radius:22px;
+    padding:30px;
+    box-shadow:0 16px 45px rgba(50,56,43,.09);
+}
+
+.login-card h1{
+    font-size:34px;
+    margin-bottom:8px;
+}
+
+.login-card label{
+    margin-top:18px;
+}
+
+.login-eyebrow{
+    font-size:10px;
+    letter-spacing:2px;
+    font-weight:700;
+    color:#8b826f;
+    margin-bottom:8px;
+}
+
+.login-button{
+    width:100%;
+    margin-top:22px;
+}
+
+.login-error{
+    margin-top:18px;
+    padding:12px 14px;
+    background:#f6dfda;
+    color:#933c31;
+    border-radius:10px;
+    font-size:13px;
+}
+
+.login-footer{
+    text-align:center;
+    margin-top:18px;
+    font-size:11px;
+    letter-spacing:1px;
+    color:#7d776c;
+}
+
+
+/* =====================================================
+   USUARIO EN HEADER
+===================================================== */
+
+.ramal-user{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding-left:12px;
+    border-left:1px solid #d9d0c4;
+}
+
+.ramal-user-name{
+    font-size:12px;
+    font-weight:700;
+    color:#38442f;
+}
+
+.ramal-user-role{
+    font-size:10px;
+    color:#7b776e;
+}
+
+.ramal-logout{
+    border:0;
+    background:#ece5d9;
+    border-radius:9px;
+    padding:8px 10px;
+    cursor:pointer;
+    font-weight:600;
+    color:#46503d;
+}
+
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+
+.dashboard-eyebrow{
+    font-size:10px;
+    letter-spacing:2px;
+    color:#8a806e;
+    font-weight:700;
+}
+
+.dashboard-section-title{
+    margin-top:30px !important;
+    margin-bottom:14px !important;
+    font-size:22px !important;
+}
+
+.daily-kpis{
+    display:grid;
+    grid-template-columns:
+        repeat(5,minmax(0,1fr));
+    gap:12px;
+}
+
+.daily-card{
+    min-height:128px;
+    padding:20px;
+    border-radius:18px;
+    background:#fffdf9;
+    border:1px solid #ddd3c5;
+    box-shadow:0 5px 18px rgba(51,57,45,.05);
+}
+
+.daily-number{
+    font-family:Georgia,serif;
+    font-size:42px;
+    line-height:1;
+    color:#3f4b32;
+}
+
+.daily-money{
+    font-family:Georgia,serif;
+    font-size:29px;
+    line-height:1.05;
+    color:#3f4b32;
+}
+
+.daily-label{
+    margin-top:12px;
+    font-size:12px;
+    font-weight:700;
+    color:#575e52;
+}
+
+.daily-note{
+    margin-top:5px;
+    font-size:10px;
+    color:#858078;
+}
+
+.sales-card{
+    background:#eee5d7;
+}
+
+.portfolio-kpis{
+    display:grid;
+    grid-template-columns:
+        repeat(4,minmax(0,1fr));
+    gap:10px;
+}
+
+.portfolio-card{
+    display:flex;
+    align-items:baseline;
+    gap:9px;
+    padding:14px 16px;
+    border-radius:14px;
+    background:#ebe9e2;
+}
+
+.portfolio-card strong{
+    font-size:24px;
+    color:#3f4b32;
+}
+
+.portfolio-card span{
+    font-size:11px;
+    color:#686d64;
+}
+
+.dashboard-main-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:22px;
+}
+
+.dashboard-big-action{
+    min-height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:#ebe5db;
+    color:#37432f;
+    font-weight:700;
+    text-decoration:none !important;
+}
+
+.dashboard-big-action.primary{
+    background:#465438;
+    color:white;
+}
+
+
+@media(max-width:950px){
+
+    .daily-kpis{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+    .portfolio-kpis{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+}
+
+
+@media(max-width:600px){
+
+    .daily-kpis,
+    .portfolio-kpis,
+    .dashboard-main-actions{
+        grid-template-columns:1fr;
+    }
+
+    .ramal-user{
+        width:100%;
+        justify-content:space-between;
+        border-left:0;
+        padding-left:0;
+    }
+
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+.login-body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+}
+
+.login-shell{
+    width:min(430px,100%);
+}
+
+.login-brand{
+    text-align:center;
+    margin-bottom:26px;
+}
+
+.login-leaf{
+    font-size:22px;
+    color:#465237;
+}
+
+.login-wordmark{
+    font-family:Georgia,serif;
+    font-size:52px;
+    color:#3f4b32;
+    line-height:1;
+}
+
+.login-subtitle{
+    margin-top:8px;
+    font-size:10px;
+    letter-spacing:2.5px;
+    color:#777268;
+}
+
+.login-card{
+    background:#fffdf9;
+    border:1px solid #ddd3c5;
+    border-radius:22px;
+    padding:30px;
+    box-shadow:0 16px 45px rgba(50,56,43,.09);
+}
+
+.login-card h1{
+    font-size:34px;
+    margin-bottom:8px;
+}
+
+.login-card label{
+    margin-top:18px;
+}
+
+.login-eyebrow{
+    font-size:10px;
+    letter-spacing:2px;
+    font-weight:700;
+    color:#8b826f;
+    margin-bottom:8px;
+}
+
+.login-button{
+    width:100%;
+    margin-top:22px;
+}
+
+.login-error{
+    margin-top:18px;
+    padding:12px 14px;
+    background:#f6dfda;
+    color:#933c31;
+    border-radius:10px;
+    font-size:13px;
+}
+
+.login-footer{
+    text-align:center;
+    margin-top:18px;
+    font-size:11px;
+    letter-spacing:1px;
+    color:#7d776c;
+}
+
+
+/* =====================================================
+   USUARIO EN HEADER
+===================================================== */
+
+.ramal-user{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding-left:12px;
+    border-left:1px solid #d9d0c4;
+}
+
+.ramal-user-name{
+    font-size:12px;
+    font-weight:700;
+    color:#38442f;
+}
+
+.ramal-user-role{
+    font-size:10px;
+    color:#7b776e;
+}
+
+.ramal-logout{
+    border:0;
+    background:#ece5d9;
+    border-radius:9px;
+    padding:8px 10px;
+    cursor:pointer;
+    font-weight:600;
+    color:#46503d;
+}
+
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+
+.dashboard-eyebrow{
+    font-size:10px;
+    letter-spacing:2px;
+    color:#8a806e;
+    font-weight:700;
+}
+
+.dashboard-section-title{
+    margin-top:30px !important;
+    margin-bottom:14px !important;
+    font-size:22px !important;
+}
+
+.daily-kpis{
+    display:grid;
+    grid-template-columns:
+        repeat(5,minmax(0,1fr));
+    gap:12px;
+}
+
+.daily-card{
+    min-height:128px;
+    padding:20px;
+    border-radius:18px;
+    background:#fffdf9;
+    border:1px solid #ddd3c5;
+    box-shadow:0 5px 18px rgba(51,57,45,.05);
+}
+
+.daily-number{
+    font-family:Georgia,serif;
+    font-size:42px;
+    line-height:1;
+    color:#3f4b32;
+}
+
+.daily-money{
+    font-family:Georgia,serif;
+    font-size:29px;
+    line-height:1.05;
+    color:#3f4b32;
+}
+
+.daily-label{
+    margin-top:12px;
+    font-size:12px;
+    font-weight:700;
+    color:#575e52;
+}
+
+.daily-note{
+    margin-top:5px;
+    font-size:10px;
+    color:#858078;
+}
+
+.sales-card{
+    background:#eee5d7;
+}
+
+.portfolio-kpis{
+    display:grid;
+    grid-template-columns:
+        repeat(4,minmax(0,1fr));
+    gap:10px;
+}
+
+.portfolio-card{
+    display:flex;
+    align-items:baseline;
+    gap:9px;
+    padding:14px 16px;
+    border-radius:14px;
+    background:#ebe9e2;
+}
+
+.portfolio-card strong{
+    font-size:24px;
+    color:#3f4b32;
+}
+
+.portfolio-card span{
+    font-size:11px;
+    color:#686d64;
+}
+
+.dashboard-main-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:22px;
+}
+
+.dashboard-big-action{
+    min-height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:#ebe5db;
+    color:#37432f;
+    font-weight:700;
+    text-decoration:none !important;
+}
+
+.dashboard-big-action.primary{
+    background:#465438;
+    color:white;
+}
+
+
+@media(max-width:950px){
+
+    .daily-kpis{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+    .portfolio-kpis{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+    }
+
+}
+
+
+@media(max-width:600px){
+
+    .daily-kpis,
+    .portfolio-kpis,
+    .dashboard-main-actions{
+        grid-template-columns:1fr;
+    }
+
+    .ramal-user{
+        width:100%;
+        justify-content:space-between;
+        border-left:0;
+        padding-left:0;
+    }
+
+}

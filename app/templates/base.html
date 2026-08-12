@@ -60,6 +60,42 @@
 
         </nav>
 
+        <div class="ramal-user">
+
+            <div>
+
+                <div class="ramal-user-name">
+                    {{request.state.user.full_name}}
+                </div>
+
+                <div class="ramal-user-role">
+
+                    {% if request.state.user.role == "admin" %}
+                        Administrador
+                    {% else %}
+                        Ventas · máximo
+                        {{request.state.user.max_discount_pct}}%
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <form
+                action="/logout"
+                method="post"
+            >
+                <button
+                    class="ramal-logout"
+                    type="submit"
+                >
+                    Salir
+                </button>
+            </form>
+
+        </div>
+
+
     </div>
 
 </header>

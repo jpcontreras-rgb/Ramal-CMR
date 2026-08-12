@@ -1,6 +1,7 @@
 import datetime as dt
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -9,12 +10,14 @@ from sqlalchemy import func, select, or_
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem, Order, Contact, Activity
+from app.config import settings
+from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem, Order, Contact, Activity, AuditEvent
 from app.services.google_places import search_places
 from app.services.pricing import split_gross
 from app.services.tavily_enrichment import enrich_company
+from app.security import require_user, log_event
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_user)])
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -26,17 +29,274 @@ def money_clp(v):
 templates.env.filters["clp"] = money_clp
 
 
+
+
+def day_bounds_utc():
+
+    tz = ZoneInfo(settings.timezone)
+
+    now_local = datetime.now(tz)
+
+    start_local = now_local.replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+
+    end_local = (
+        start_local
+        + timedelta(days=1)
+    )
+
+    start_utc = (
+        start_local
+        .astimezone(dt.timezone.utc)
+        .replace(tzinfo=None)
+    )
+
+    end_utc = (
+        end_local
+        .astimezone(dt.timezone.utc)
+        .replace(tzinfo=None)
+    )
+
+    return (
+        now_local,
+        start_utc,
+        end_utc,
+    )
+
+
 @router.get("/", response_class=HTMLResponse)
-def dashboard(request: Request, db: Session = Depends(get_db)):
-    today = datetime.now()
-    counts = {
-        "prospects": db.scalar(select(func.count()).select_from(Prospect)) or 0,
-        "to_contact": db.scalar(select(func.count()).select_from(Prospect).where(Prospect.status.in_([ProspectStatus.NEW, ProspectStatus.TO_CONTACT]))) or 0,
-        "quotes_active": db.scalar(select(func.count()).select_from(Quote).where(Quote.valid_until >= date.today())) or 0,
-        "followups": db.scalar(select(func.count()).select_from(Prospect).where(Prospect.next_action_at <= today)) or 0,
+def dashboard(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    now_local, start_utc, end_utc = day_bounds_utc()
+
+    now_local_naive = now_local.replace(
+        tzinfo=None
+    )
+
+    today_local = now_local.date()
+
+
+    # =========================================
+    # ACTIVIDAD DE HOY
+    # =========================================
+
+    prospects_today = (
+        db.scalar(
+            select(func.count())
+            .select_from(Prospect)
+            .where(
+                Prospect.created_at >= start_utc,
+                Prospect.created_at < end_utc,
+            )
+        )
+        or 0
+    )
+
+
+    web_researched_today = (
+        db.scalar(
+            select(
+                func.count(
+                    func.distinct(
+                        AuditEvent.prospect_id
+                    )
+                )
+            )
+            .where(
+                AuditEvent.event_type
+                == "WEB_RESEARCH",
+
+                AuditEvent.prospect_id
+                .is_not(None),
+
+                AuditEvent.happened_at
+                >= start_utc,
+
+                AuditEvent.happened_at
+                < end_utc,
+            )
+        )
+        or 0
+    )
+
+
+    manual_types = [
+        "MANUAL_EDIT",
+        "MANUAL_CONTACT",
+        "MANUAL_ACTIVITY",
+        "MANUAL_STATUS",
+    ]
+
+
+    manual_worked_today = (
+        db.scalar(
+            select(
+                func.count(
+                    func.distinct(
+                        AuditEvent.prospect_id
+                    )
+                )
+            )
+            .where(
+                AuditEvent.event_type
+                .in_(manual_types),
+
+                AuditEvent.prospect_id
+                .is_not(None),
+
+                AuditEvent.happened_at
+                >= start_utc,
+
+                AuditEvent.happened_at
+                < end_utc,
+            )
+        )
+        or 0
+    )
+
+
+    quotes_today = (
+        db.scalar(
+            select(func.count())
+            .select_from(Quote)
+            .where(
+                Quote.created_at >= start_utc,
+                Quote.created_at < end_utc,
+            )
+        )
+        or 0
+    )
+
+
+    sales_count_today = (
+        db.scalar(
+            select(func.count())
+            .select_from(Order)
+            .where(
+                Order.created_at >= start_utc,
+                Order.created_at < end_utc,
+            )
+        )
+        or 0
+    )
+
+
+    sales_total_today = (
+        db.scalar(
+            select(
+                func.sum(
+                    Order.total_gross_clp
+                )
+            )
+            .where(
+                Order.created_at >= start_utc,
+                Order.created_at < end_utc,
+            )
+        )
+        or Decimal("0")
+    )
+
+
+    daily = {
+        "prospects_added":
+            prospects_today,
+
+        "web_researched":
+            web_researched_today,
+
+        "manual_worked":
+            manual_worked_today,
+
+        "quotes_created":
+            quotes_today,
+
+        "sales_count":
+            sales_count_today,
+
+        "sales_total":
+            sales_total_today,
     }
-    recent = db.scalars(select(Prospect).order_by(Prospect.created_at.desc()).limit(8)).all()
-    return templates.TemplateResponse(request, "dashboard.html", {"counts": counts, "recent": recent})
+
+
+    # =========================================
+    # CARTERA
+    # =========================================
+
+    counts = {
+
+        "prospects":
+            db.scalar(
+                select(func.count())
+                .select_from(Prospect)
+            )
+            or 0,
+
+        "to_contact":
+            db.scalar(
+                select(func.count())
+                .select_from(Prospect)
+                .where(
+                    Prospect.status.in_([
+                        ProspectStatus.NEW,
+                        ProspectStatus.TO_CONTACT,
+                    ])
+                )
+            )
+            or 0,
+
+        "quotes_active":
+            db.scalar(
+                select(func.count())
+                .select_from(Quote)
+                .where(
+                    Quote.valid_until
+                    >= today_local
+                )
+            )
+            or 0,
+
+        "followups":
+            db.scalar(
+                select(func.count())
+                .select_from(Prospect)
+                .where(
+                    Prospect.next_action_at
+                    <= now_local_naive
+                )
+            )
+            or 0,
+    }
+
+
+    recent = db.scalars(
+        select(Prospect)
+        .order_by(
+            Prospect.created_at.desc()
+        )
+        .limit(8)
+    ).all()
+
+
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        {
+            "daily": daily,
+            "counts": counts,
+            "recent": recent,
+            "today_label":
+                now_local.strftime(
+                    "%d/%m/%Y"
+                ),
+        },
+    )
 
 
 @router.get("/products", response_class=HTMLResponse)
@@ -186,13 +446,20 @@ def prospects(
 
 
 @router.post("/prospects")
-def prospect_create(company_name: str = Form(...), industry: str = Form(""), commune: str = Form(""), phone: str = Form(""), email: str = Form(""), instagram: str = Form(""), website: str = Form(""), address: str = Form(""), google_place_id: str = Form(""), latitude: str = Form(""), longitude: str = Form(""), source: str = Form("Manual"), db: Session = Depends(get_db)):
+def prospect_create(request: Request, company_name: str = Form(...), industry: str = Form(""), commune: str = Form(""), phone: str = Form(""), email: str = Form(""), instagram: str = Form(""), website: str = Form(""), address: str = Form(""), google_place_id: str = Form(""), latitude: str = Form(""), longitude: str = Form(""), source: str = Form("Manual"), db: Session = Depends(get_db)):
     if google_place_id:
         existing = db.scalar(select(Prospect).where(Prospect.google_place_id == google_place_id))
         if existing:
             return RedirectResponse(f"/prospects/{existing.id}", status_code=303)
     p = Prospect(company_name=company_name, industry=industry or None, commune=commune or None, phone=phone or None, email=email or None, instagram=instagram or None, website=website or None, address=address or None, google_place_id=google_place_id or None, latitude=float(latitude) if latitude else None, longitude=float(longitude) if longitude else None, source=source or None)
     db.add(p); db.commit(); db.refresh(p)
+    log_event(
+        db,
+        request,
+        "PROSPECT_CREATED",
+        p.id,
+    )
+    db.commit()
     return RedirectResponse(f"/prospects/{p.id}", status_code=303)
 
 
@@ -251,9 +518,25 @@ async def prospect_enrich(
 
 
 @router.post("/prospects/{prospect_id}/status")
-def prospect_status(prospect_id: int, status: str = Form(...), db: Session = Depends(get_db)):
+def prospect_status(prospect_id: int, request: Request, status: str = Form(...), db: Session = Depends(get_db)):
     p = db.get(Prospect, prospect_id)
-    p.status = ProspectStatus(status); db.commit()
+    old_status = p.status.value
+
+    p.status = ProspectStatus(status)
+
+    log_event(
+        db,
+        request,
+        "MANUAL_STATUS",
+        prospect_id,
+        {
+            "from": old_status,
+            "to": p.status.value,
+        },
+    )
+
+    db.commit()
+
     return RedirectResponse(f"/prospects/{prospect_id}", status_code=303)
 
 
@@ -298,6 +581,7 @@ def prospect_delete(
 @router.post("/prospects/{prospect_id}/edit")
 def prospect_edit(
     prospect_id: int,
+    request: Request,
     company_name: str = Form(...),
     branch_name: str = Form(""),
     industry: str = Form(""),
@@ -347,6 +631,7 @@ def prospect_edit(
 @router.post("/prospects/{prospect_id}/contacts")
 def prospect_contact_create(
     prospect_id: int,
+    request: Request,
     name: str = Form(...),
     role: str = Form(""),
     phone: str = Form(""),
@@ -371,6 +656,14 @@ def prospect_contact_create(
     )
 
     db.add(contact)
+
+    log_event(
+        db,
+        request,
+        "MANUAL_CONTACT",
+        prospect_id,
+    )
+
     db.commit()
 
     return RedirectResponse(
@@ -403,6 +696,7 @@ def contact_delete(
 @router.post("/prospects/{prospect_id}/activities")
 def prospect_activity_create(
     prospect_id: int,
+    request: Request,
     activity_type: str = Form(...),
     result: str = Form(""),
     next_action: str = Form(""),
@@ -447,6 +741,17 @@ def prospect_activity_create(
         ]:
             p.status = ProspectStatus.FOLLOW_UP
 
+    log_event(
+        db,
+        request,
+        "MANUAL_ACTIVITY",
+        prospect_id,
+        {
+            "activity_type":
+                activity_type,
+        },
+    )
+
     db.commit()
 
     return RedirectResponse(
@@ -469,7 +774,7 @@ async def web_search_page(request: Request, q: str | None = None, db: Session = 
 
 
 @router.post("/prospects/{prospect_id}/quotes")
-def quote_create_form(prospect_id: int, product_id: int = Form(...), quantity_kg: Decimal = Form(...), unit_price_gross_clp: Decimal | None = Form(None), notes: str = Form(""), db: Session = Depends(get_db)):
+def quote_create_form(prospect_id: int, request: Request, product_id: int = Form(...), quantity_kg: Decimal = Form(...), unit_price_gross_clp: Decimal | None = Form(None), notes: str = Form(""), db: Session = Depends(get_db)):
     product = db.get(Product, product_id)
     unit = unit_price_gross_clp or product.price_gross_clp
     if unit is None:
@@ -479,7 +784,21 @@ def quote_create_form(prospect_id: int, product_id: int = Form(...), quantity_kg
     gross=(quantity_kg*unit).quantize(Decimal("1"))
     db.add(QuoteItem(quote_id=q.id, product_id=product.id, product_name_snapshot=product.name, quantity_kg=quantity_kg, unit_price_gross_clp=unit, line_total_gross_clp=gross))
     q.net_clp,q.tax_clp,q.total_clp=split_gross(gross)
-    p=db.get(Prospect, prospect_id); p.status=ProspectStatus.QUOTED
+    p=db.get(Prospect, prospect_id)
+    p.status=ProspectStatus.QUOTED
+
+    log_event(
+        db,
+        request,
+        "QUOTE_CREATED",
+        prospect_id,
+        {
+            "quote_id": q.id,
+            "quote_number":
+                q.quote_number,
+        },
+    )
+
     db.commit()
     return RedirectResponse(f"/quotes/{q.id}", status_code=303)
 
