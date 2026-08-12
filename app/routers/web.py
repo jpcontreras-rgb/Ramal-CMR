@@ -1185,9 +1185,7 @@ def quote_create_form(
     )
 
 
-    net,
-    tax,
-    total = split_gross(
+    net, tax, total = split_gross(
         total_gross
     )
 
