@@ -142,7 +142,12 @@ class Order(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     order_number: Mapped[str | None] = mapped_column(String(32), unique=True, index=True)
     prospect_id: Mapped[int] = mapped_column(ForeignKey("prospects.id"), index=True)
-    quote_id: Mapped[int | None] = mapped_column(ForeignKey("quotes.id"), nullable=True, index=True)
+    quote_id: Mapped[int | None] = mapped_column(
+        ForeignKey("quotes.id"),
+        nullable=True,
+        index=True,
+        unique=True,
+    )
     order_date: Mapped[date] = mapped_column(Date, default=date.today, index=True)
     status: Mapped[str] = mapped_column(String(60), default="Ingresado", index=True)
     notes: Mapped[str | None] = mapped_column(Text)

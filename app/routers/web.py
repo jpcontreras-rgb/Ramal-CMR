@@ -562,6 +562,14 @@ def prospects(
 ):
     stmt = select(Prospect)
 
+    # Por defecto la bandeja contiene oportunidades,
+    # no clientes ya convertidos.
+    if not status:
+        stmt = stmt.where(
+            Prospect.status
+            != ProspectStatus.CUSTOMER
+        )
+
     # --------------------------------------------------
     # BUSCADOR
     # --------------------------------------------------

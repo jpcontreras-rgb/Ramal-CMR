@@ -1417,3 +1417,243 @@
     }
 
 }
+
+
+/* =====================================================
+   CONVERSION COTIZACION -> PEDIDO
+===================================================== */
+
+.quote-conversion{
+    margin-top:24px;
+}
+
+.quote-accept-box,
+.quote-accepted-box{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+
+    padding:20px;
+
+    border-radius:16px;
+
+    background:#e6ebdf;
+    border:1px solid #cbd4bf;
+}
+
+.quote-accepted-box{
+    background:#e1eadb;
+}
+
+.quote-conversion-error{
+    padding:14px;
+    margin-bottom:12px;
+
+    border-radius:12px;
+
+    background:#f4ded9;
+    color:#8e3f35;
+}
+
+
+/* =====================================================
+   PEDIDOS
+===================================================== */
+
+.order-document{
+    max-width:950px;
+    margin:0 auto;
+}
+
+.order-head{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    align-items:flex-start;
+    margin-bottom:24px;
+}
+
+.order-status{
+    padding:8px 14px;
+
+    border-radius:999px;
+
+    background:#e3eadc;
+
+    font-size:11px;
+    font-weight:700;
+
+    color:#43523a;
+}
+
+.order-client-card{
+    padding:20px;
+    margin-bottom:18px;
+
+    border-radius:16px;
+
+    background:#eee7dc;
+}
+
+.order-origin{
+    margin-top:12px;
+    font-size:11px;
+}
+
+.order-total-box{
+    width:min(360px,100%);
+    margin:25px 0 25px auto;
+}
+
+.order-total-box > div{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+
+    padding:8px 0;
+}
+
+.order-grand-total{
+    margin-top:7px;
+    padding-top:14px !important;
+
+    border-top:2px solid #465438;
+
+    font-size:21px;
+    color:#3f4b32;
+}
+
+
+/* =====================================================
+   CLIENTES
+===================================================== */
+
+.clients-head{
+    margin-bottom:22px;
+}
+
+.clients-search{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px;
+
+    margin-bottom:18px;
+}
+
+.client-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.client-card{
+    display:grid;
+
+    grid-template-columns:
+        minmax(260px,1fr)
+        110px
+        175px
+        140px;
+
+    align-items:center;
+
+    gap:18px;
+
+    padding:18px 20px;
+
+    background:#fffdf9;
+
+    border:1px solid #ddd3c5;
+    border-radius:17px;
+
+    text-decoration:none !important;
+    color:inherit !important;
+}
+
+.client-card:hover{
+    border-color:#bfb29f;
+}
+
+.client-badge{
+    display:inline-block;
+
+    padding:3px 7px;
+    margin-bottom:6px;
+
+    border-radius:999px;
+
+    background:#e0e8da;
+
+    font-size:8px;
+    font-weight:800;
+
+    letter-spacing:1px;
+
+    color:#45543b;
+}
+
+.client-name{
+    display:block;
+
+    font-size:17px;
+
+    color:#35412e;
+}
+
+.client-meta{
+    margin-top:4px;
+
+    font-size:11px;
+
+    color:#7d7b72;
+}
+
+.client-stat{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.client-stat span{
+    font-size:9px;
+
+    text-transform:uppercase;
+    letter-spacing:.7px;
+
+    color:#8b8478;
+}
+
+.client-stat strong{
+    color:#3f4b32;
+}
+
+.client-purchased strong{
+    font-family:Georgia,serif;
+    font-size:18px;
+}
+
+
+@media(max-width:800px){
+
+    .quote-accept-box,
+    .quote-accepted-box{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .client-card{
+        grid-template-columns:1fr 1fr;
+    }
+
+}
+
+
+@media(max-width:520px){
+
+    .clients-search,
+    .client-card{
+        grid-template-columns:1fr;
+    }
+
+}

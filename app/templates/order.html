@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="order-document">
+
+
+    <div class="order-head">
+
+        <div>
+
+            <div class="dashboard-eyebrow">
+                PEDIDO CONFIRMADO
+            </div>
+
+            <h1>
+                {{order.order_number}}
+            </h1>
+
+            <div class="muted">
+                Generado el
+                {{order.order_date.strftime('%d/%m/%Y')}}
+            </div>
+
+        </div>
+
+
+        <div class="order-status">
+            {{order.status}}
+        </div>
+
+    </div>
+
+
+    <div class="order-client-card">
+
+        <div class="quote-label">
+            CLIENTE
+        </div>
+
+        <strong>
+            {{order.prospect.company_name}}
+        </strong>
+
+        {% if order.prospect.email %}
+        <div>
+            {{order.prospect.email}}
+        </div>
+        {% endif %}
+
+        {% if order.prospect.phone %}
+        <div>
+            {{order.prospect.phone}}
+        </div>
+        {% endif %}
+
+
+        {% if quote %}
+
+        <div class="order-origin">
+            Cotización de origen:
+            <a href="/quotes/{{quote.id}}">
+                {{quote.quote_number}}
+            </a>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="quote-table-wrap">
+
+        <table class="quote-table">
+
+            <thead>
+
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th>Total</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for item in order.items %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            {{item.product_name_snapshot}}
+                        </strong>
+                    </td>
+
+                    <td>
+                        {{item.quantity_kg}} kg
+                    </td>
+
+                    <td>
+                        {{item.unit_price_gross_clp|clp}}
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{item.line_total_gross_clp|clp}}
+                        </strong>
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div class="order-total-box">
+
+        <div>
+            <span>Neto</span>
+            <strong>{{net|clp}}</strong>
+        </div>
+
+        <div>
+            <span>IVA 19%</span>
+            <strong>{{tax|clp}}</strong>
+        </div>
+
+        <div class="order-grand-total">
+            <span>Total pedido</span>
+            <strong>{{total|clp}}</strong>
+        </div>
+
+    </div>
+
+
+    {% if order.notes %}
+
+    <div class="card order-notes">
+
+        <div class="quote-label">
+            OBSERVACIONES
+        </div>
+
+        {{order.notes}}
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="quote-actions no-print">
+
+        <a
+            class="btn"
+            href="/clients"
+        >
+            Clientes
+        </a>
+
+        <a
+            class="btn"
+            href="/prospects/{{order.prospect_id}}"
+        >
+            Ficha del cliente
+        </a>
+
+        <button
+            class="btn btn-primary"
+            onclick="window.print()"
+        >
+            Imprimir pedido
+        </button>
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

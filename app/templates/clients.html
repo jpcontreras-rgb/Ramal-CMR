@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="clients-head">
+
+    <div>
+
+        <div class="dashboard-eyebrow">
+            CARTERA RAMAL
+        </div>
+
+        <h1>Clientes</h1>
+
+        <div class="muted">
+            Empresas que ya registran al menos una compra.
+        </div>
+
+    </div>
+
+</div>
+
+
+<form
+    method="get"
+    class="card clients-search"
+>
+
+    <input
+        name="q"
+        value="{{q}}"
+        placeholder="Buscar cliente, email, teléfono o comuna"
+    >
+
+    <button
+        class="btn btn-primary"
+        type="submit"
+    >
+        Buscar
+    </button>
+
+</form>
+
+
+<div class="client-list">
+
+
+{% for row in clients %}
+
+{% set c = row.customer %}
+
+<a
+    class="client-card"
+    href="/prospects/{{c.id}}"
+>
+
+    <div class="client-main">
+
+        <div class="client-badge">
+            CLIENTE
+        </div>
+
+        <strong class="client-name">
+            {{c.company_name}}
+        </strong>
+
+        <div class="client-meta">
+
+            {% if c.industry %}
+                {{c.industry}}
+            {% endif %}
+
+            {% if c.commune %}
+                · {{c.commune}}
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="client-stat">
+
+        <span>Pedidos</span>
+
+        <strong>
+            {{row.orders_count}}
+        </strong>
+
+    </div>
+
+
+    <div class="client-stat client-purchased">
+
+        <span>Compra acumulada</span>
+
+        <strong>
+            {{row.purchased|clp}}
+        </strong>
+
+    </div>
+
+
+    <div class="client-stat">
+
+        <span>Último pedido</span>
+
+        <strong>
+
+            {% if row.last_order %}
+                {{row.last_order.order_date.strftime('%d/%m/%Y')}}
+            {% else %}
+                —
+            {% endif %}
+
+        </strong>
+
+    </div>
+
+</a>
+
+
+{% else %}
+
+<div class="card muted">
+    Todavía no existen clientes convertidos.
+</div>
+
+{% endfor %}
+
+
+</div>
+
+
+{% endblock %}

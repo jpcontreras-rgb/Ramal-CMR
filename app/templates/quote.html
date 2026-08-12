@@ -224,6 +224,102 @@
     </div>
 
 
+
+    <div class="quote-conversion no-print">
+
+        {% if error == "rejected" %}
+
+        <div class="quote-conversion-error">
+            Esta cotización fue rechazada y no puede
+            convertirse directamente en pedido.
+        </div>
+
+        {% endif %}
+
+
+        {% if error == "noitems" %}
+
+        <div class="quote-conversion-error">
+            La cotización no contiene productos.
+        </div>
+
+        {% endif %}
+
+
+        {% if order %}
+
+        <div class="quote-accepted-box">
+
+            <div>
+
+                <div class="quote-label">
+                    COTIZACIÓN ACEPTADA
+                </div>
+
+                <strong>
+                    Pedido {{order.order_number}}
+                </strong>
+
+                <div class="muted">
+                    El cliente ya fue incorporado
+                    al área de Clientes.
+                </div>
+
+            </div>
+
+
+            <a
+                class="btn btn-primary"
+                href="/orders/{{order.id}}"
+            >
+                Ver pedido
+            </a>
+
+        </div>
+
+
+        {% elif q.status.value != "Aceptada" %}
+
+        <div class="quote-accept-box">
+
+            <div>
+
+                <strong>
+                    ¿El cliente aceptó esta cotización?
+                </strong>
+
+                <div class="muted">
+                    Se generará automáticamente un pedido
+                    y el prospecto pasará a Cliente.
+                </div>
+
+            </div>
+
+
+            <form
+                method="post"
+                action="/quotes/{{q.id}}/accept"
+                onsubmit="return confirm(
+                    '¿Confirmas que el cliente aceptó la cotización? Se generará el pedido.'
+                );"
+            >
+
+                <button
+                    class="btn btn-primary"
+                    type="submit"
+                >
+                    Aceptar cotización y generar pedido
+                </button>
+
+            </form>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
     <div class="quote-actions no-print">
 
         <a
