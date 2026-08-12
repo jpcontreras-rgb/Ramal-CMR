@@ -1645,3 +1645,154 @@ def client_create(
         f"/prospects/{client.id}",
         status_code=303,
     )
+
+
+@router.get(
+    "/quotes",
+    response_class=HTMLResponse,
+)
+def quotes_list(
+    request: Request,
+    q: str = "",
+    status: str = "",
+    db: Session = Depends(get_db),
+):
+
+    stmt = select(Quote)
+
+    # --------------------------------------------------
+    # BUSCADOR
+    # --------------------------------------------------
+
+    if q.strip():
+
+        term = f"%{q.strip()}%"
+
+        stmt = (
+            stmt
+            .join(
+                Prospect,
+                Quote.prospect_id == Prospect.id,
+            )
+            .where(
+                or_(
+                    Quote.quote_number.ilike(term),
+                    Prospect.company_name.ilike(term),
+                    Prospect.email.ilike(term),
+                )
+            )
+        )
+
+
+    # --------------------------------------------------
+    # ESTADO
+    # --------------------------------------------------
+
+    if status:
+
+        try:
+            quote_status = QuoteStatus(status)
+
+            stmt = stmt.where(
+                Quote.status == quote_status
+            )
+
+        except ValueError:
+            pass
+
+
+    quotes = db.scalars(
+        stmt.order_by(
+            Quote.quote_date.desc(),
+            Quote.id.desc(),
+        )
+    ).all()
+
+
+    rows = []
+
+    today = date.today()
+
+
+    for quote in quotes:
+
+        order = db.scalar(
+            select(Order).where(
+                Order.quote_id == quote.id
+            )
+        )
+
+
+        display_status = quote.status.value
+
+        # Una cotización que superó su vigencia se muestra
+        # como vencida mientras no haya sido aceptada/rechazada.
+        if (
+            quote.valid_until < today
+            and quote.status not in [
+                QuoteStatus.ACCEPTED,
+                QuoteStatus.REJECTED,
+            ]
+        ):
+            display_status = "Vencida"
+
+
+        rows.append(
+            {
+                "quote": quote,
+                "order": order,
+                "display_status": display_status,
+            }
+        )
+
+
+    # --------------------------------------------------
+    # RESUMEN GLOBAL
+    # --------------------------------------------------
+
+    total_quotes = (
+        db.scalar(
+            select(func.count())
+            .select_from(Quote)
+        )
+        or 0
+    )
+
+
+    total_amount = (
+        db.scalar(
+            select(
+                func.sum(
+                    Quote.total_clp
+                )
+            )
+        )
+        or Decimal("0")
+    )
+
+
+    accepted_count = (
+        db.scalar(
+            select(func.count())
+            .select_from(Quote)
+            .where(
+                Quote.status
+                == QuoteStatus.ACCEPTED
+            )
+        )
+        or 0
+    )
+
+
+    return templates.TemplateResponse(
+        request,
+        "quotes.html",
+        {
+            "rows": rows,
+            "q": q,
+            "status_filter": status,
+            "total_quotes": total_quotes,
+            "total_amount": total_amount,
+            "accepted_count": accepted_count,
+        },
+    )

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="quotes-page-head">
+
+    <div>
+
+        <div class="dashboard-eyebrow">
+            ACTIVIDAD COMERCIAL
+        </div>
+
+        <h1>Cotizaciones</h1>
+
+        <div class="muted">
+            Historial completo de cotizaciones Ramal.
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="quotes-kpis">
+
+
+    <div class="quote-kpi">
+
+        <span>Total cotizaciones</span>
+
+        <strong>
+            {{total_quotes}}
+        </strong>
+
+    </div>
+
+
+    <div class="quote-kpi">
+
+        <span>Monto cotizado</span>
+
+        <strong>
+            {{total_amount|clp}}
+        </strong>
+
+    </div>
+
+
+    <div class="quote-kpi">
+
+        <span>Aceptadas</span>
+
+        <strong>
+            {{accepted_count}}
+        </strong>
+
+    </div>
+
+
+</div>
+
+
+<form
+    method="get"
+    class="card quotes-filter"
+>
+
+    <input
+        name="q"
+        value="{{q}}"
+        placeholder="Buscar por empresa o número de cotización"
+    >
+
+
+    <select name="status">
+
+        <option value="">
+            Todos los estados
+        </option>
+
+        <option
+            value="Borrador"
+            {% if status_filter == "Borrador" %}
+            selected
+            {% endif %}
+        >
+            Borrador
+        </option>
+
+        <option
+            value="Enviada"
+            {% if status_filter == "Enviada" %}
+            selected
+            {% endif %}
+        >
+            Enviada
+        </option>
+
+        <option
+            value="Aceptada"
+            {% if status_filter == "Aceptada" %}
+            selected
+            {% endif %}
+        >
+            Aceptada
+        </option>
+
+        <option
+            value="Rechazada"
+            {% if status_filter == "Rechazada" %}
+            selected
+            {% endif %}
+        >
+            Rechazada
+        </option>
+
+        <option
+            value="Vencida"
+            {% if status_filter == "Vencida" %}
+            selected
+            {% endif %}
+        >
+            Vencida
+        </option>
+
+    </select>
+
+
+    <button
+        class="btn btn-primary"
+        type="submit"
+    >
+        Buscar
+    </button>
+
+</form>
+
+
+<div class="quotes-list">
+
+
+{% for row in rows %}
+
+{% set quote = row.quote %}
+
+
+<a
+    class="quote-list-card"
+    href="/quotes/{{quote.id}}"
+>
+
+
+    <div class="quote-list-main">
+
+        <div class="quote-list-number">
+            {{quote.quote_number}}
+        </div>
+
+
+        <strong class="quote-list-client">
+            {{quote.prospect.company_name}}
+        </strong>
+
+
+        <div class="quote-list-meta">
+
+            Emitida
+            {{quote.quote_date.strftime('%d/%m/%Y')}}
+
+            ·
+
+            válida hasta
+            {{quote.valid_until.strftime('%d/%m/%Y')}}
+
+        </div>
+
+    </div>
+
+
+    <div class="quote-list-total">
+
+        <span>Total</span>
+
+        <strong>
+            {{quote.total_clp|clp}}
+        </strong>
+
+    </div>
+
+
+    <div class="quote-list-status">
+
+        <span
+            class="quote-status-pill
+            {% if row.display_status == 'Aceptada' %}
+                accepted
+            {% elif row.display_status == 'Vencida' %}
+                expired
+            {% elif row.display_status == 'Rechazada' %}
+                rejected
+            {% endif %}
+            "
+        >
+            {{row.display_status}}
+        </span>
+
+
+        {% if row.order %}
+
+        <div class="quote-order-reference">
+            {{row.order.order_number}}
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+</a>
+
+
+{% else %}
+
+<div class="card muted">
+    No existen cotizaciones con estos filtros.
+</div>
+
+{% endfor %}
+
+
+</div>
+
+
+{% endblock %}
