@@ -280,7 +280,6 @@ def dashboard(
         .order_by(
             Prospect.created_at.desc()
         )
-        .limit(8)
     ).all()
 
 
