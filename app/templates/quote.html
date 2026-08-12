@@ -113,8 +113,8 @@
                 <tr>
                     <th>Producto</th>
                     <th>Cantidad</th>
-                    <th>Precio unitario</th>
-                    <th>Total</th>
+                    <th>Precio unitario IVA incl.</th>
+                    <th>Total IVA incl.</th>
                 </tr>
 
             </thead>
@@ -180,21 +180,21 @@
         <div class="quote-totals">
 
             <div>
-                <span>Neto</span>
+                <span>Neto contenido</span>
                 <strong>
                     {{q.net_clp|clp}}
                 </strong>
             </div>
 
             <div>
-                <span>IVA 19%</span>
+                <span>IVA contenido (19%)</span>
                 <strong>
                     {{q.tax_clp|clp}}
                 </strong>
             </div>
 
             <div class="grand-total">
-                <span>Total</span>
+                <span>Total a pagar</span>
                 <strong>
                     {{q.total_clp|clp}}
                 </strong>
