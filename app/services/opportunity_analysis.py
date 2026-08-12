@@ -324,7 +324,7 @@ FAMILY_RULES = [
         ],
         "signals": [
             "mayonesa",
-            "mayo",
+            "mayonnaise",
         ],
     },
 
@@ -365,11 +365,275 @@ def normalize(value: str) -> str:
         if not unicodedata.combining(c)
     )
 
+    value = re.sub(
+        r"[^a-z0-9]+",
+        " ",
+        value,
+    )
+
     return re.sub(
-        r"\s+",
+        r"\\s+",
         " ",
         value,
     ).strip()
+
+
+def signal_found(
+    signal: str,
+    text: str,
+) -> bool:
+
+    signal_normalized = normalize(
+        signal
+    )
+
+    text_normalized = normalize(
+        text
+    )
+
+    if not signal_normalized:
+        return False
+
+    # Frases y palabras deben coincidir completas.
+    # Evita, por ejemplo:
+    # mayo -> mayor
+    # papa -> papagayo
+    pattern = (
+        r"(?<![a-z0-9])"
+        + re.escape(signal_normalized)
+        + r"(?![a-z0-9])"
+    )
+
+    return (
+        re.search(
+            pattern,
+            text_normalized,
+        )
+        is not None
+    )
+
+
+
+
+def clean_domain(
+    url: str | None,
+) -> str:
+
+    if not url:
+        return ""
+
+    value = (
+        url.lower()
+        .replace("https://", "")
+        .replace("http://", "")
+        .split("/")[0]
+    )
+
+    if value.startswith("www."):
+        value = value[4:]
+
+    return value
+
+
+def source_quality(
+    url: str | None,
+    title: str | None,
+    official_website: str | None,
+) -> dict:
+
+    url_n = normalize(url or "")
+    title_n = normalize(title or "")
+
+    domain = clean_domain(url)
+    official_domain = clean_domain(
+        official_website
+    )
+
+    quality = 0.40
+    label = "Fuente externa"
+
+
+    # WEB OFICIAL
+    if (
+        official_domain
+        and domain
+        and (
+            domain == official_domain
+            or domain.endswith(
+                "." + official_domain
+            )
+        )
+    ):
+        quality = 0.90
+        label = "Sitio oficial"
+
+
+    # CARTA / MENU
+    menu_terms = [
+        "menu",
+        "carta",
+        "food",
+        "comida",
+        "platos",
+    ]
+
+    if any(
+        signal_found(term, url_n)
+        or signal_found(term, title_n)
+        for term in menu_terms
+    ):
+
+        quality = max(
+            quality,
+            0.95,
+        )
+
+        if label == "Sitio oficial":
+            label = "Carta oficial"
+        else:
+            label = "Carta / menú"
+
+
+    # PDF
+    if ".pdf" in (url or "").lower():
+
+        quality = max(
+            quality,
+            0.95,
+        )
+
+        label = "Carta PDF"
+
+
+    # DELIVERY
+    delivery_domains = [
+        "pedidosya",
+        "ubereats",
+        "uber.com",
+        "rappi",
+        "justo",
+        "mercat",
+    ]
+
+    if any(
+        item in domain
+        for item in delivery_domains
+    ):
+
+        quality = max(
+            quality,
+            0.80,
+        )
+
+        label = "Delivery"
+
+
+    # REDES SOCIALES
+    social_domains = [
+        "instagram.com",
+        "facebook.com",
+        "tiktok.com",
+    ]
+
+    if any(
+        item in domain
+        for item in social_domains
+    ):
+
+        quality = max(
+            quality,
+            0.65,
+        )
+
+        label = "Red social"
+
+
+    return {
+        "quality": quality,
+        "label": label,
+        "domain": domain,
+    }
+
+
+
+def commercial_pitch(
+    family: str,
+) -> str:
+
+    family_n = normalize(
+        family
+    )
+
+
+    if any(
+        item in family_n
+        for item in [
+            "pulled pork",
+            "costilla",
+            "pollo",
+        ]
+    ):
+
+        return (
+            "Producto estandarizado que puede "
+            "reducir preparación, mano de obra "
+            "y merma."
+        )
+
+
+    if any(
+        item in family_n
+        for item in [
+            "tomate",
+            "palta",
+            "cebolla",
+            "zanahoria",
+            "repollo",
+            "papa",
+            "aji",
+            "apio",
+            "betarraga",
+        ]
+    ):
+
+        return (
+            "Ingrediente preprocesado que puede "
+            "reducir mise en place, merma y "
+            "variación de porciones."
+        )
+
+
+    if any(
+        item in family_n
+        for item in [
+            "bbq",
+            "mayonesa",
+            "mostaza",
+            "chimichurri",
+        ]
+    ):
+
+        return (
+            "Salsa estandarizada que facilita "
+            "mantener sabor, rendimiento y costo "
+            "por porción consistentes."
+        )
+
+
+    if "encurt" in family_n:
+
+        return (
+            "Producto listo para usar que reduce "
+            "elaboración interna y facilita la "
+            "estandarización."
+        )
+
+
+    return (
+        "Producto Ramal compatible con una "
+        "preparación identificada en la oferta "
+        "del negocio."
+    )
 
 
 def _rule_for_product(
@@ -491,9 +755,10 @@ def _snippet(
         )
 
         if any(
-            normalize(signal)
-            in normalized_piece
-
+            signal_found(
+                signal,
+                piece,
+            )
             for signal
             in signals
         ):
@@ -506,80 +771,135 @@ def _snippet(
     return None
 
 
+
 def match_product_families(
     source_blocks: list[dict],
     products: list[dict],
+    official_website: str | None = None,
 ) -> list[dict]:
 
     families = build_product_families(
         products
     )
 
-    all_text = "\n".join(
-        block.get("text", "")
-        for block in source_blocks
-    )
-
-    normalized_all = normalize(
-        all_text
-    )
-
     matches = []
+
 
     for family in families:
 
-        hits = []
+        evidences = []
 
-        for signal in family["signals"]:
+        unique_hits = set()
 
-            if (
-                normalize(signal)
-                in normalized_all
-            ):
-                hits.append(signal)
-
-        if not hits:
-            continue
-
-        evidence = []
 
         for block in source_blocks:
 
-            snippet = _snippet(
-                block.get("text", ""),
-                hits,
+            block_text = (
+                block.get("text")
+                or ""
             )
 
-            if snippet:
+            block_hits = [
+                signal
+                for signal
+                in family["signals"]
 
-                evidence.append(
-                    {
-                        "text":
-                            snippet,
-
-                        "url":
-                            block.get("url"),
-
-                        "title":
-                            block.get("title"),
-                    }
+                if signal_found(
+                    signal,
+                    block_text,
                 )
+            ]
 
-            if len(evidence) >= 2:
-                break
+
+            if not block_hits:
+                continue
+
+
+            snippet = _snippet(
+                block_text,
+                block_hits,
+            )
+
+
+            # Si no podemos mostrar evidencia,
+            # no usamos esta fuente para recomendar.
+            if not snippet:
+                continue
+
+
+            quality_info = source_quality(
+                block.get("url"),
+                block.get("title"),
+                official_website,
+            )
+
+
+            unique_hits.update(
+                block_hits
+            )
+
+
+            evidences.append(
+                {
+                    "text":
+                        snippet,
+
+                    "url":
+                        block.get("url"),
+
+                    "title":
+                        block.get("title"),
+
+                    "source_type":
+                        quality_info[
+                            "label"
+                        ],
+
+                    "quality":
+                        quality_info[
+                            "quality"
+                        ],
+                }
+            )
+
+
+        if not evidences:
+            continue
+
+
+        evidences.sort(
+            key=lambda e:
+                e["quality"],
+            reverse=True,
+        )
+
+
+        best_quality = evidences[0][
+            "quality"
+        ]
+
+
+        # Una única mención débil ya no puede
+        # convertirse en una oportunidad "alta".
+        score = int(
+            30
+            + best_quality * 30
+            + min(
+                len(evidences) - 1,
+                2,
+            ) * 8
+            + min(
+                len(unique_hits) - 1,
+                2,
+            ) * 6
+        )
+
 
         score = min(
-            95,
-            55
-            + max(
-                0,
-                len(set(hits)) - 1
-            ) * 10
-            + min(
-                len(evidence),
-                2,
-            ) * 5,
+            score,
+            92,
         )
+
 
         matches.append(
             {
@@ -593,17 +913,35 @@ def match_product_families(
                     score,
 
                 "hits":
-                    hits[:5],
+                    sorted(
+                        unique_hits
+                    )[:5],
 
                 "evidence":
-                    evidence,
+                    evidences[:3],
+
+                "best_source_type":
+                    evidences[0][
+                        "source_type"
+                    ],
+
+                "best_quality":
+                    best_quality,
+
+                "pitch":
+                    commercial_pitch(
+                        family["family"]
+                    ),
             }
         )
 
+
     matches.sort(
-        key=lambda x: x["score"],
+        key=lambda x:
+            x["score"],
         reverse=True,
     )
+
 
     return matches[:8]
 
@@ -732,42 +1070,32 @@ async def analyze_restaurant_opportunity(
     matches = match_product_families(
         blocks,
         products,
+        official_website=website,
     )
 
     if matches:
 
-        top_score = matches[0][
-            "score"
-        ]
+        best_match = matches[0]
 
+        score = (
+            best_match["score"]
+            + min(
+                len(matches) - 1,
+                3,
+            ) * 7
+        )
+
+        # Tener varias familias compatibles
+        # aumenta la relevancia comercial.
         score = min(
-            100,
-            int(
-                50
-                + min(
-                    len(matches),
-                    4,
-                ) * 8
-                + max(
-                    0,
-                    top_score - 55,
-                )
-                * 0.6
-                + (
-                    4
-                    if website
-                    else 0
-                )
-            ),
+            95,
+            score,
         )
 
     else:
 
-        score = (
-            19
-            if website
-            else 15
-        )
+        score = 10
+
 
     if score >= 80:
         level = "Alta"
@@ -775,8 +1103,12 @@ async def analyze_restaurant_opportunity(
     elif score >= 60:
         level = "Media"
 
-    else:
+    elif score >= 40:
         level = "Baja"
+
+    else:
+        level = "Sin evidencia"
+
 
     evidence_text = ""
 

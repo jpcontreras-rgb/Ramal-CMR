@@ -307,12 +307,27 @@
 
             <div class="opportunity-evidence">
 
-                <strong>
-                    {{match.family}}
-                </strong>
+                <div class="opportunity-evidence-head">
+
+                    <strong>
+                        {{match.family}}
+                    </strong>
+
+                    <span>
+                        {{match.evidence[0].source_type}}
+                    </span>
+
+                </div>
 
                 <div>
                     {{match.evidence[0].text}}
+                </div>
+
+                <div class="opportunity-pitch">
+                    <strong>
+                        Oportunidad Ramal:
+                    </strong>
+                    {{match.pitch}}
                 </div>
 
                 {% if match.evidence[0].url %}

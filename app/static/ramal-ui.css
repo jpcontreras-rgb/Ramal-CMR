@@ -2352,3 +2352,50 @@
     }
 
 }
+
+
+/* =====================================================
+   OPORTUNIDADES V2
+===================================================== */
+
+.opportunity-evidence-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:4px;
+}
+
+.opportunity-evidence-head span{
+    padding:3px 7px;
+    border-radius:999px;
+
+    background:#e8e5dc;
+
+    font-size:8px;
+    font-weight:700;
+
+    text-transform:uppercase;
+    letter-spacing:.5px;
+
+    color:#67705f;
+}
+
+.opportunity-pitch{
+    margin-top:8px;
+    padding:8px 10px;
+
+    border-radius:9px;
+
+    background:#f2ede4;
+
+    font-size:10px;
+    line-height:1.4;
+
+    color:#565e50;
+}
+
+.opportunity-pitch strong{
+    display:inline;
+    margin-right:3px;
+}
