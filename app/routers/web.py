@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, Form, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select, or_
@@ -298,10 +298,256 @@ def dashboard(
     )
 
 
+
 @router.get("/products", response_class=HTMLResponse)
-def product_list(request: Request, db: Session = Depends(get_db)):
-    products = db.scalars(select(Product).order_by(Product.category, Product.name)).all()
-    return templates.TemplateResponse(request, "products.html", {"products": products})
+def product_list(
+    request: Request,
+    q: str = "",
+    category: str = "",
+    status: str = "active",
+    db: Session = Depends(get_db),
+):
+
+    user = request.state.user
+    is_admin = user.role == "admin"
+
+    stmt = select(Product)
+
+    # Ventas solo puede ver productos activos
+    if not is_admin:
+
+        stmt = stmt.where(
+            Product.active.is_(True)
+        )
+
+        status = "active"
+
+    else:
+
+        if status == "active":
+            stmt = stmt.where(
+                Product.active.is_(True)
+            )
+
+        elif status == "inactive":
+            stmt = stmt.where(
+                Product.active.is_(False)
+            )
+
+    # Buscador
+    if q.strip():
+
+        term = f"%{q.strip()}%"
+
+        stmt = stmt.where(
+            or_(
+                Product.name.ilike(term),
+                Product.sku.ilike(term),
+                Product.category.ilike(term),
+            )
+        )
+
+    # Categoría
+    if category:
+
+        stmt = stmt.where(
+            Product.category == category
+        )
+
+    stmt = stmt.order_by(
+        Product.category,
+        Product.name,
+    )
+
+    products = db.scalars(
+        stmt
+    ).all()
+
+    categories = db.scalars(
+        select(Product.category)
+        .distinct()
+        .order_by(Product.category)
+    ).all()
+
+    categories = [
+        x for x in categories
+        if x and x.strip()
+    ]
+
+    return templates.TemplateResponse(
+        request,
+        "products.html",
+        {
+            "products": products,
+            "categories": categories,
+            "q": q,
+            "category_filter": category,
+            "status_filter": status,
+            "is_admin": is_admin,
+            "error":
+                request.query_params.get("error"),
+            "created":
+                request.query_params.get("created"),
+            "updated":
+                request.query_params.get("updated"),
+        },
+    )
+
+
+@router.post("/products")
+def product_create(
+    request: Request,
+    sku: str = Form(...),
+    category: str = Form(...),
+    name: str = Form(...),
+    format: str = Form("1 kg"),
+    price_gross_clp: Decimal = Form(...),
+    db: Session = Depends(get_db),
+):
+
+    if request.state.user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Solo Administrador puede crear productos.",
+        )
+
+    sku = sku.strip().upper()
+
+    existing = db.scalar(
+        select(Product).where(
+            func.lower(Product.sku)
+            == sku.lower()
+        )
+    )
+
+    if existing:
+        return RedirectResponse(
+            "/products?error=sku",
+            status_code=303,
+        )
+
+    if price_gross_clp < 0:
+        return RedirectResponse(
+            "/products?error=price",
+            status_code=303,
+        )
+
+    product = Product(
+        sku=sku,
+        category=category.strip(),
+        name=name.strip(),
+        format=format.strip() or "1 kg",
+        price_gross_clp=price_gross_clp,
+        active=True,
+    )
+
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+
+    return RedirectResponse(
+        f"/products?created={product.id}",
+        status_code=303,
+    )
+
+
+@router.post("/products/{product_id}/edit")
+def product_edit(
+    product_id: int,
+    request: Request,
+    sku: str = Form(...),
+    category: str = Form(...),
+    name: str = Form(...),
+    format: str = Form("1 kg"),
+    price_gross_clp: Decimal = Form(...),
+    db: Session = Depends(get_db),
+):
+
+    if request.state.user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Solo Administrador puede modificar productos.",
+        )
+
+    product = db.get(
+        Product,
+        product_id,
+    )
+
+    if not product:
+        raise HTTPException(
+            status_code=404,
+            detail="Producto no encontrado.",
+        )
+
+    sku = sku.strip().upper()
+
+    duplicate = db.scalar(
+        select(Product).where(
+            func.lower(Product.sku)
+            == sku.lower(),
+            Product.id != product_id,
+        )
+    )
+
+    if duplicate:
+        return RedirectResponse(
+            "/products?error=sku",
+            status_code=303,
+        )
+
+    if price_gross_clp < 0:
+        return RedirectResponse(
+            "/products?error=price",
+            status_code=303,
+        )
+
+    product.sku = sku
+    product.category = category.strip()
+    product.name = name.strip()
+    product.format = format.strip() or "1 kg"
+    product.price_gross_clp = price_gross_clp
+
+    db.commit()
+
+    return RedirectResponse(
+        f"/products?updated={product_id}",
+        status_code=303,
+    )
+
+
+@router.post("/products/{product_id}/toggle")
+def product_toggle(
+    product_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    if request.state.user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Solo Administrador puede activar o desactivar productos.",
+        )
+
+    product = db.get(
+        Product,
+        product_id,
+    )
+
+    if not product:
+        raise HTTPException(
+            status_code=404,
+            detail="Producto no encontrado.",
+        )
+
+    product.active = not product.active
+
+    db.commit()
+
+    return RedirectResponse(
+        "/products?status=all",
+        status_code=303,
+    )
 
 
 @router.get("/prospects", response_class=HTMLResponse)

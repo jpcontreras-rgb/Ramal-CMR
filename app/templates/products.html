@@ -1,1 +1,428 @@
-{% extends "base.html" %}{% block content %}<div class="row"><h1>Productos</h1><a class="btn" href="/">Inicio</a></div><div class="table-wrap card"><table class="table"><thead><tr><th>Categoría</th><th>Producto</th><th>Formato</th><th>Precio IVA incl.</th></tr></thead><tbody>{% for p in products %}<tr><td>{{p.category}}</td><td><strong>{{p.name}}</strong><div class="muted">{{p.sku}}</div></td><td>{{p.format}}</td><td class="money">{{p.price_gross_clp|clp}}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="products-header">
+
+    <div>
+
+        <div class="dashboard-eyebrow">
+            CATÁLOGO RAMAL
+        </div>
+
+        <h1>Productos</h1>
+
+        <div class="muted">
+            {{products|length}} productos
+        </div>
+
+    </div>
+
+
+    {% if is_admin %}
+
+    <details class="new-product-details">
+
+        <summary class="btn btn-primary">
+            + Nuevo producto
+        </summary>
+
+        <div class="card new-product-card">
+
+            <h3>Agregar producto</h3>
+
+            <form
+                method="post"
+                action="/products"
+                class="product-form"
+            >
+
+                <label>
+                    Código / SKU
+
+                    <input
+                        name="sku"
+                        required
+                        placeholder="Ej. PRO-006"
+                    >
+                </label>
+
+
+                <label>
+                    Categoría
+
+                    <input
+                        name="category"
+                        required
+                        placeholder="Proteínas"
+                    >
+                </label>
+
+
+                <label class="product-form-wide">
+                    Nombre
+
+                    <input
+                        name="name"
+                        required
+                        placeholder="Nombre del producto"
+                    >
+                </label>
+
+
+                <label>
+                    Formato
+
+                    <input
+                        name="format"
+                        value="1 kg"
+                        required
+                    >
+                </label>
+
+
+                <label>
+                    Precio IVA incluido
+
+                    <input
+                        type="number"
+                        name="price_gross_clp"
+                        min="0"
+                        step="1"
+                        required
+                        placeholder="8990"
+                    >
+                </label>
+
+
+                <button
+                    class="btn btn-primary product-form-wide"
+                    type="submit"
+                >
+                    Guardar producto
+                </button>
+
+            </form>
+
+        </div>
+
+    </details>
+
+    {% endif %}
+
+</div>
+
+
+{% if error == "sku" %}
+
+<div class="product-alert error">
+    Ya existe un producto con ese SKU.
+</div>
+
+{% endif %}
+
+
+{% if error == "price" %}
+
+<div class="product-alert error">
+    El precio ingresado no es válido.
+</div>
+
+{% endif %}
+
+
+{% if created %}
+
+<div class="product-alert success">
+    Producto creado correctamente.
+</div>
+
+{% endif %}
+
+
+{% if updated %}
+
+<div class="product-alert success">
+    Producto actualizado correctamente.
+</div>
+
+{% endif %}
+
+
+<form
+    class="card products-filter"
+    method="get"
+>
+
+    <input
+        name="q"
+        value="{{q}}"
+        placeholder="Buscar por producto, SKU o categoría"
+    >
+
+
+    <select name="category">
+
+        <option value="">
+            Todas las categorías
+        </option>
+
+        {% for category in categories %}
+
+        <option
+            value="{{category}}"
+            {% if category_filter == category %}
+            selected
+            {% endif %}
+        >
+            {{category}}
+        </option>
+
+        {% endfor %}
+
+    </select>
+
+
+    {% if is_admin %}
+
+    <select name="status">
+
+        <option
+            value="active"
+            {% if status_filter == "active" %}
+            selected
+            {% endif %}
+        >
+            Activos
+        </option>
+
+        <option
+            value="inactive"
+            {% if status_filter == "inactive" %}
+            selected
+            {% endif %}
+        >
+            Inactivos
+        </option>
+
+        <option
+            value="all"
+            {% if status_filter == "all" %}
+            selected
+            {% endif %}
+        >
+            Todos
+        </option>
+
+    </select>
+
+    {% endif %}
+
+
+    <button
+        class="btn btn-primary"
+        type="submit"
+    >
+        Buscar
+    </button>
+
+</form>
+
+
+<div class="product-list">
+
+
+{% for p in products %}
+
+
+<div class="product-card {% if not p.active %}product-inactive{% endif %}">
+
+
+    <div class="product-info">
+
+        <div class="product-category">
+            {{p.category}}
+        </div>
+
+
+        <div class="product-name">
+            {{p.name}}
+        </div>
+
+
+        <div class="product-meta">
+
+            <span>
+                {{p.sku}}
+            </span>
+
+            <span>
+                {{p.format}}
+            </span>
+
+            {% if not p.active %}
+
+            <span class="product-inactive-badge">
+                Inactivo
+            </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="product-price">
+
+        <div class="product-price-label">
+            Precio IVA incl.
+        </div>
+
+        <strong>
+            {{p.price_gross_clp|clp}}
+        </strong>
+
+    </div>
+
+
+    {% if is_admin %}
+
+    <div class="product-actions">
+
+
+        <details class="product-edit-details">
+
+            <summary class="btn btn-small">
+                Editar
+            </summary>
+
+
+            <div class="product-edit-panel">
+
+                <form
+                    method="post"
+                    action="/products/{{p.id}}/edit"
+                    class="product-form"
+                >
+
+                    <label>
+                        SKU
+
+                        <input
+                            name="sku"
+                            value="{{p.sku}}"
+                            required
+                        >
+                    </label>
+
+
+                    <label>
+                        Categoría
+
+                        <input
+                            name="category"
+                            value="{{p.category}}"
+                            required
+                        >
+                    </label>
+
+
+                    <label class="product-form-wide">
+                        Nombre
+
+                        <input
+                            name="name"
+                            value="{{p.name}}"
+                            required
+                        >
+                    </label>
+
+
+                    <label>
+                        Formato
+
+                        <input
+                            name="format"
+                            value="{{p.format}}"
+                            required
+                        >
+                    </label>
+
+
+                    <label>
+                        Precio IVA incluido
+
+                        <input
+                            type="number"
+                            name="price_gross_clp"
+                            value="{{p.price_gross_clp|int}}"
+                            min="0"
+                            step="1"
+                            required
+                        >
+                    </label>
+
+
+                    <button
+                        class="btn btn-primary product-form-wide"
+                        type="submit"
+                    >
+                        Guardar cambios
+                    </button>
+
+                </form>
+
+            </div>
+
+        </details>
+
+
+        <form
+            method="post"
+            action="/products/{{p.id}}/toggle"
+            onsubmit="return confirm(
+                '{% if p.active %}¿Desactivar este producto?{% else %}¿Reactivar este producto?{% endif %}'
+            );"
+        >
+
+            <button
+                class="btn btn-small {% if p.active %}product-disable{% endif %}"
+                type="submit"
+            >
+
+                {% if p.active %}
+                    Desactivar
+                {% else %}
+                    Reactivar
+                {% endif %}
+
+            </button>
+
+        </form>
+
+
+    </div>
+
+    {% endif %}
+
+
+</div>
+
+
+{% else %}
+
+
+<div class="card muted">
+    No hay productos para estos filtros.
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+{% endblock %}
