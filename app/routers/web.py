@@ -11,7 +11,19 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.config import settings
-from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem, Order, Contact, Activity, AuditEvent
+from app.models import (
+    Product,
+    Prospect,
+    ProspectStatus,
+    Quote,
+    QuoteItem,
+    QuoteStatus,
+    Order,
+    OrderItem,
+    Contact,
+    Activity,
+    AuditEvent,
+)
 from app.services.google_places import search_places
 from app.services.pricing import split_gross, money
 from app.services.tavily_enrichment import enrich_company
@@ -1272,6 +1284,290 @@ def quote_create_form(
 
 
 @router.get("/quotes/{quote_id}", response_class=HTMLResponse)
-def quote_detail(quote_id: int, request: Request, db: Session = Depends(get_db)):
-    quote=db.get(Quote, quote_id)
-    return templates.TemplateResponse(request, "quote.html", {"q": quote})
+def quote_detail(
+    quote_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    quote = db.get(Quote, quote_id)
+
+    if not quote:
+        raise HTTPException(
+            status_code=404,
+            detail="Cotización no encontrada.",
+        )
+
+    order = db.scalar(
+        select(Order).where(
+            Order.quote_id == quote_id
+        )
+    )
+
+    return templates.TemplateResponse(
+        request,
+        "quote.html",
+        {
+            "q": quote,
+            "order": order,
+            "error": request.query_params.get("error"),
+        },
+    )
+
+
+@router.post("/quotes/{quote_id}/accept")
+def quote_accept(
+    quote_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    quote = db.get(Quote, quote_id)
+
+    if not quote:
+        raise HTTPException(
+            status_code=404,
+            detail="Cotización no encontrada.",
+        )
+
+    # Evita generar dos pedidos desde la misma cotización
+    existing_order = db.scalar(
+        select(Order).where(
+            Order.quote_id == quote_id
+        )
+    )
+
+    if existing_order:
+        return RedirectResponse(
+            f"/orders/{existing_order.id}",
+            status_code=303,
+        )
+
+    if quote.status == QuoteStatus.REJECTED:
+        return RedirectResponse(
+            f"/quotes/{quote_id}?error=rejected",
+            status_code=303,
+        )
+
+    if not quote.items:
+        return RedirectResponse(
+            f"/quotes/{quote_id}?error=noitems",
+            status_code=303,
+        )
+
+    prospect = db.get(
+        Prospect,
+        quote.prospect_id,
+    )
+
+    if not prospect:
+        raise HTTPException(
+            status_code=404,
+            detail="Prospecto no encontrado.",
+        )
+
+    today = date.today()
+
+    order = Order(
+        prospect_id=prospect.id,
+        quote_id=quote.id,
+        order_date=today,
+        status="Ingresado",
+        notes=quote.notes,
+        total_gross_clp=quote.total_clp,
+    )
+
+    db.add(order)
+    db.flush()
+
+    order.order_number = (
+        f"PED-{today.year}-{order.id:05d}"
+    )
+
+    # Copiamos precios y cantidades de la cotización.
+    # No usamos el precio vigente del catálogo.
+    for quote_item in quote.items:
+
+        db.add(
+            OrderItem(
+                order_id=order.id,
+                product_id=quote_item.product_id,
+                product_name_snapshot=
+                    quote_item.product_name_snapshot,
+                quantity_kg=
+                    quote_item.quantity_kg,
+                unit_price_gross_clp=
+                    quote_item.unit_price_gross_clp,
+                line_total_gross_clp=
+                    quote_item.line_total_gross_clp,
+            )
+        )
+
+    quote.status = QuoteStatus.ACCEPTED
+    prospect.status = ProspectStatus.CUSTOMER
+    prospect.next_action_at = None
+
+    db.add(
+        Activity(
+            prospect_id=prospect.id,
+            activity_type="Venta",
+            happened_at=datetime.utcnow(),
+            result=(
+                f"Cotización {quote.quote_number} aceptada. "
+                f"Pedido {order.order_number} generado por "
+                f"{money_clp(order.total_gross_clp)}."
+            ),
+        )
+    )
+
+    log_event(
+        db,
+        request,
+        "ORDER_CREATED",
+        prospect.id,
+        {
+            "quote_id": quote.id,
+            "quote_number": quote.quote_number,
+            "order_id": order.id,
+            "order_number": order.order_number,
+            "total_clp": int(order.total_gross_clp),
+        },
+    )
+
+    db.commit()
+
+    return RedirectResponse(
+        f"/orders/{order.id}",
+        status_code=303,
+    )
+
+
+@router.get(
+    "/orders/{order_id}",
+    response_class=HTMLResponse,
+)
+def order_detail(
+    order_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    order = db.get(Order, order_id)
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Pedido no encontrado.",
+        )
+
+    quote = None
+
+    if order.quote_id:
+        quote = db.get(
+            Quote,
+            order.quote_id,
+        )
+
+    net, tax, total = split_gross(
+        Decimal(order.total_gross_clp)
+    )
+
+    return templates.TemplateResponse(
+        request,
+        "order.html",
+        {
+            "order": order,
+            "quote": quote,
+            "net": net,
+            "tax": tax,
+            "total": total,
+        },
+    )
+
+
+@router.get(
+    "/clients",
+    response_class=HTMLResponse,
+)
+def clients(
+    request: Request,
+    q: str = "",
+    db: Session = Depends(get_db),
+):
+    stmt = select(Prospect).where(
+        Prospect.status == ProspectStatus.CUSTOMER
+    )
+
+    if q.strip():
+        term = f"%{q.strip()}%"
+
+        stmt = stmt.where(
+            or_(
+                Prospect.company_name.ilike(term),
+                Prospect.email.ilike(term),
+                Prospect.phone.ilike(term),
+                Prospect.commune.ilike(term),
+            )
+        )
+
+    customers = db.scalars(
+        stmt.order_by(
+            Prospect.updated_at.desc()
+        )
+    ).all()
+
+    client_rows = []
+
+    for customer in customers:
+
+        orders_count = (
+            db.scalar(
+                select(func.count())
+                .select_from(Order)
+                .where(
+                    Order.prospect_id == customer.id
+                )
+            )
+            or 0
+        )
+
+        purchased = (
+            db.scalar(
+                select(
+                    func.sum(
+                        Order.total_gross_clp
+                    )
+                )
+                .where(
+                    Order.prospect_id == customer.id
+                )
+            )
+            or Decimal("0")
+        )
+
+        last_order = db.scalar(
+            select(Order)
+            .where(
+                Order.prospect_id == customer.id
+            )
+            .order_by(
+                Order.order_date.desc(),
+                Order.id.desc(),
+            )
+            .limit(1)
+        )
+
+        client_rows.append(
+            {
+                "customer": customer,
+                "orders_count": orders_count,
+                "purchased": purchased,
+                "last_order": last_order,
+            }
+        )
+
+    return templates.TemplateResponse(
+        request,
+        "clients.html",
+        {
+            "clients": client_rows,
+            "q": q,
+        },
+    )
