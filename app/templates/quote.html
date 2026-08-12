@@ -96,7 +96,7 @@
             </div>
 
             <strong>
-                {{q.status.value}}
+                {{display_status}}
             </strong>
 
         </div>
@@ -225,6 +225,116 @@
 
 
 
+
+    <div class="quote-management no-print">
+
+        {% if duplicated %}
+
+        <div class="quote-management-success">
+            Cotización duplicada correctamente.
+            Esta es una nueva cotización con 5 días
+            de vigencia.
+        </div>
+
+        {% endif %}
+
+
+        {% if error == "locked" %}
+
+        <div class="quote-conversion-error">
+            Esta cotización ya tiene una operación
+            posterior y su estado no puede modificarse.
+        </div>
+
+        {% endif %}
+
+
+        {% if error == "expired" %}
+
+        <div class="quote-conversion-error">
+            Esta cotización está vencida.
+            Puedes duplicarla para generar una nueva
+            con precios y vigencia actualizados.
+        </div>
+
+        {% endif %}
+
+
+        <div class="quote-management-actions">
+
+
+            {% if display_status == "Borrador" %}
+
+            <form
+                method="post"
+                action="/quotes/{{q.id}}/sent"
+            >
+
+                <button
+                    class="btn btn-primary"
+                    type="submit"
+                >
+                    Marcar como enviada
+                </button>
+
+            </form>
+
+            {% endif %}
+
+
+            {% if display_status in ["Borrador", "Enviada"] %}
+
+            <form
+                method="post"
+                action="/quotes/{{q.id}}/reject"
+                onsubmit="return confirm(
+                    '¿Marcar esta cotización como rechazada?'
+                );"
+            >
+
+                <button
+                    class="btn quote-reject-button"
+                    type="submit"
+                >
+                    Rechazada
+                </button>
+
+            </form>
+
+            {% endif %}
+
+
+            <form
+                method="post"
+                action="/quotes/{{q.id}}/duplicate"
+                onsubmit="return confirm(
+                    '¿Crear una nueva cotización copiando estos productos, cantidades y precios?'
+                );"
+            >
+
+                <button
+                    class="btn"
+                    type="submit"
+                >
+                    Duplicar cotización
+                </button>
+
+            </form>
+
+
+            <a
+                class="btn"
+                href="/quotes"
+            >
+                Ver todas
+            </a>
+
+
+        </div>
+
+    </div>
+
+
     <div class="quote-conversion no-print">
 
         {% if error == "rejected" %}
@@ -278,7 +388,7 @@
         </div>
 
 
-        {% elif q.status.value != "Aceptada" %}
+        {% elif display_status in ["Borrador", "Enviada"] %}
 
         <div class="quote-accept-box">
 

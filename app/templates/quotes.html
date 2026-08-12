@@ -61,16 +61,39 @@
 </div>
 
 
+
 <form
     method="get"
-    class="card quotes-filter"
+    class="card quotes-filter quotes-filter-advanced"
 >
 
     <input
         name="q"
         value="{{q}}"
-        placeholder="Buscar por empresa o número de cotización"
+        placeholder="Empresa o número de cotización"
     >
+
+
+    <select name="prospect_id">
+
+        <option value="">
+            Todas las empresas
+        </option>
+
+        {% for company in companies %}
+
+        <option
+            value="{{company.id}}"
+            {% if prospect_filter == company.id %}
+            selected
+            {% endif %}
+        >
+            {{company.company_name}}
+        </option>
+
+        {% endfor %}
+
+    </select>
 
 
     <select name="status">
@@ -79,62 +102,71 @@
             Todos los estados
         </option>
 
-        <option
-            value="Borrador"
-            {% if status_filter == "Borrador" %}
-            selected
-            {% endif %}
-        >
-            Borrador
-        </option>
+        {% for value in [
+            "Borrador",
+            "Enviada",
+            "Aceptada",
+            "Rechazada",
+            "Vencida"
+        ] %}
 
         <option
-            value="Enviada"
-            {% if status_filter == "Enviada" %}
+            value="{{value}}"
+            {% if status_filter == value %}
             selected
             {% endif %}
         >
-            Enviada
+            {{value}}
         </option>
 
-        <option
-            value="Aceptada"
-            {% if status_filter == "Aceptada" %}
-            selected
-            {% endif %}
-        >
-            Aceptada
-        </option>
-
-        <option
-            value="Rechazada"
-            {% if status_filter == "Rechazada" %}
-            selected
-            {% endif %}
-        >
-            Rechazada
-        </option>
-
-        <option
-            value="Vencida"
-            {% if status_filter == "Vencida" %}
-            selected
-            {% endif %}
-        >
-            Vencida
-        </option>
+        {% endfor %}
 
     </select>
+
+
+    <label class="quote-date-filter">
+
+        <span>Desde</span>
+
+        <input
+            type="date"
+            name="date_from"
+            value="{% if date_from %}{{date_from.isoformat()}}{% endif %}"
+        >
+
+    </label>
+
+
+    <label class="quote-date-filter">
+
+        <span>Hasta</span>
+
+        <input
+            type="date"
+            name="date_to"
+            value="{% if date_to %}{{date_to.isoformat()}}{% endif %}"
+        >
+
+    </label>
 
 
     <button
         class="btn btn-primary"
         type="submit"
     >
-        Buscar
+        Filtrar
     </button>
 
+
+    <a
+        class="btn"
+        href="/quotes"
+    >
+        Limpiar
+    </a>
+
 </form>
+
 
 
 <div class="quotes-list">

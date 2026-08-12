@@ -1289,7 +1289,10 @@ def quote_detail(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    quote = db.get(Quote, quote_id)
+    quote = db.get(
+        Quote,
+        quote_id,
+    )
 
     if not quote:
         raise HTTPException(
@@ -1303,13 +1306,28 @@ def quote_detail(
         )
     )
 
+    display_status = quote.status.value
+
+    if (
+        quote.valid_until < date.today()
+        and quote.status not in [
+            QuoteStatus.ACCEPTED,
+            QuoteStatus.REJECTED,
+        ]
+    ):
+        display_status = QuoteStatus.EXPIRED.value
+
     return templates.TemplateResponse(
         request,
         "quote.html",
         {
             "q": quote,
             "order": order,
-            "error": request.query_params.get("error"),
+            "display_status": display_status,
+            "error":
+                request.query_params.get("error"),
+            "duplicated":
+                request.query_params.get("duplicated"),
         },
     )
 
@@ -1344,6 +1362,15 @@ def quote_accept(
     if quote.status == QuoteStatus.REJECTED:
         return RedirectResponse(
             f"/quotes/{quote_id}?error=rejected",
+            status_code=303,
+        )
+
+    if (
+        quote.status == QuoteStatus.EXPIRED
+        or quote.valid_until < date.today()
+    ):
+        return RedirectResponse(
+            f"/quotes/{quote_id}?error=expired",
             status_code=303,
         )
 
@@ -1646,7 +1673,6 @@ def client_create(
         status_code=303,
     )
 
-
 @router.get(
     "/quotes",
     response_class=HTMLResponse,
@@ -1655,10 +1681,16 @@ def quotes_list(
     request: Request,
     q: str = "",
     status: str = "",
+    prospect_id: int | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
     db: Session = Depends(get_db),
 ):
 
+    today = date.today()
+
     stmt = select(Quote)
+
 
     # --------------------------------------------------
     # BUSCADOR
@@ -1685,17 +1717,69 @@ def quotes_list(
 
 
     # --------------------------------------------------
+    # EMPRESA / CLIENTE
+    # --------------------------------------------------
+
+    if prospect_id:
+
+        stmt = stmt.where(
+            Quote.prospect_id == prospect_id
+        )
+
+
+    # --------------------------------------------------
+    # FECHAS
+    # --------------------------------------------------
+
+    if date_from:
+
+        stmt = stmt.where(
+            Quote.quote_date >= date_from
+        )
+
+    if date_to:
+
+        stmt = stmt.where(
+            Quote.quote_date <= date_to
+        )
+
+
+    # --------------------------------------------------
     # ESTADO
     # --------------------------------------------------
 
-    if status:
+    if status == QuoteStatus.EXPIRED.value:
+
+        stmt = stmt.where(
+            Quote.valid_until < today,
+            Quote.status.notin_([
+                QuoteStatus.ACCEPTED,
+                QuoteStatus.REJECTED,
+            ]),
+        )
+
+    elif status:
 
         try:
-            quote_status = QuoteStatus(status)
+
+            selected_status = QuoteStatus(
+                status
+            )
 
             stmt = stmt.where(
-                Quote.status == quote_status
+                Quote.status == selected_status
             )
+
+            # Borrador y Enviada no incluyen
+            # cotizaciones que ya están vencidas.
+            if selected_status in [
+                QuoteStatus.DRAFT,
+                QuoteStatus.SENT,
+            ]:
+
+                stmt = stmt.where(
+                    Quote.valid_until >= today
+                )
 
         except ValueError:
             pass
@@ -1706,12 +1790,10 @@ def quotes_list(
             Quote.quote_date.desc(),
             Quote.id.desc(),
         )
-    ).all()
+    ).unique().all()
 
 
     rows = []
-
-    today = date.today()
 
 
     for quote in quotes:
@@ -1722,11 +1804,8 @@ def quotes_list(
             )
         )
 
-
         display_status = quote.status.value
 
-        # Una cotización que superó su vigencia se muestra
-        # como vencida mientras no haya sido aceptada/rechazada.
         if (
             quote.valid_until < today
             and quote.status not in [
@@ -1734,54 +1813,52 @@ def quotes_list(
                 QuoteStatus.REJECTED,
             ]
         ):
-            display_status = "Vencida"
-
+            display_status = (
+                QuoteStatus.EXPIRED.value
+            )
 
         rows.append(
             {
                 "quote": quote,
                 "order": order,
-                "display_status": display_status,
+                "display_status":
+                    display_status,
             }
         )
 
 
-    # --------------------------------------------------
-    # RESUMEN GLOBAL
-    # --------------------------------------------------
+    # KPIs del resultado filtrado
+    total_quotes = len(rows)
 
-    total_quotes = (
-        db.scalar(
-            select(func.count())
-            .select_from(Quote)
-        )
-        or 0
+    total_amount = sum(
+        (
+            Decimal(row["quote"].total_clp)
+            for row in rows
+        ),
+        Decimal("0"),
+    )
+
+    accepted_count = sum(
+        1
+        for row in rows
+        if row["display_status"]
+        == QuoteStatus.ACCEPTED.value
     )
 
 
-    total_amount = (
-        db.scalar(
-            select(
-                func.sum(
-                    Quote.total_clp
-                )
-            )
+    # Empresas que tienen cotizaciones
+    companies = db.scalars(
+        select(Prospect)
+        .join(
+            Quote,
+            Quote.prospect_id
+            == Prospect.id,
         )
-        or Decimal("0")
-    )
-
-
-    accepted_count = (
-        db.scalar(
-            select(func.count())
-            .select_from(Quote)
-            .where(
-                Quote.status
-                == QuoteStatus.ACCEPTED
-            )
+        .distinct()
+        .order_by(
+            Prospect.company_name
         )
-        or 0
-    )
+    ).all()
 
 
     return templates.TemplateResponse(
@@ -1791,8 +1868,330 @@ def quotes_list(
             "rows": rows,
             "q": q,
             "status_filter": status,
-            "total_quotes": total_quotes,
-            "total_amount": total_amount,
-            "accepted_count": accepted_count,
+            "prospect_filter":
+                prospect_id,
+            "date_from":
+                date_from,
+            "date_to":
+                date_to,
+            "companies":
+                companies,
+            "total_quotes":
+                total_quotes,
+            "total_amount":
+                total_amount,
+            "accepted_count":
+                accepted_count,
         },
+    )
+
+
+
+# =========================================================
+# MARCAR COMO ENVIADA
+# =========================================================
+
+@router.post("/quotes/{quote_id}/sent")
+def quote_mark_sent(
+    quote_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    quote = db.get(
+        Quote,
+        quote_id,
+    )
+
+    if not quote:
+        raise HTTPException(
+            status_code=404,
+            detail="Cotización no encontrada.",
+        )
+
+
+    order = db.scalar(
+        select(Order).where(
+            Order.quote_id == quote.id
+        )
+    )
+
+
+    if (
+        order
+        or quote.status
+        in [
+            QuoteStatus.ACCEPTED,
+            QuoteStatus.REJECTED,
+        ]
+    ):
+        return RedirectResponse(
+            f"/quotes/{quote_id}?error=locked",
+            status_code=303,
+        )
+
+
+    if quote.valid_until < date.today():
+
+        quote.status = QuoteStatus.EXPIRED
+        db.commit()
+
+        return RedirectResponse(
+            f"/quotes/{quote_id}?error=expired",
+            status_code=303,
+        )
+
+
+    quote.status = QuoteStatus.SENT
+    quote.sent_at = datetime.utcnow()
+
+
+    db.add(
+        Activity(
+            prospect_id=quote.prospect_id,
+            activity_type="Cotización",
+            happened_at=datetime.utcnow(),
+            result=(
+                f"Cotización "
+                f"{quote.quote_number} "
+                f"marcada como enviada."
+            ),
+        )
+    )
+
+
+    log_event(
+        db,
+        request,
+        "QUOTE_SENT",
+        quote.prospect_id,
+        {
+            "quote_id": quote.id,
+            "quote_number":
+                quote.quote_number,
+        },
+    )
+
+
+    db.commit()
+
+
+    return RedirectResponse(
+        f"/quotes/{quote.id}",
+        status_code=303,
+    )
+
+
+
+# =========================================================
+# RECHAZAR
+# =========================================================
+
+@router.post("/quotes/{quote_id}/reject")
+def quote_reject(
+    quote_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    quote = db.get(
+        Quote,
+        quote_id,
+    )
+
+    if not quote:
+        raise HTTPException(
+            status_code=404,
+            detail="Cotización no encontrada.",
+        )
+
+
+    order = db.scalar(
+        select(Order).where(
+            Order.quote_id == quote.id
+        )
+    )
+
+
+    if (
+        order
+        or quote.status
+        == QuoteStatus.ACCEPTED
+    ):
+        return RedirectResponse(
+            f"/quotes/{quote_id}?error=locked",
+            status_code=303,
+        )
+
+
+    quote.status = QuoteStatus.REJECTED
+
+
+    db.add(
+        Activity(
+            prospect_id=quote.prospect_id,
+            activity_type="Cotización",
+            happened_at=datetime.utcnow(),
+            result=(
+                f"Cotización "
+                f"{quote.quote_number} "
+                f"marcada como rechazada."
+            ),
+        )
+    )
+
+
+    log_event(
+        db,
+        request,
+        "QUOTE_REJECTED",
+        quote.prospect_id,
+        {
+            "quote_id": quote.id,
+            "quote_number":
+                quote.quote_number,
+        },
+    )
+
+
+    db.commit()
+
+
+    return RedirectResponse(
+        f"/quotes/{quote.id}",
+        status_code=303,
+    )
+
+
+
+# =========================================================
+# DUPLICAR
+# =========================================================
+
+@router.post("/quotes/{quote_id}/duplicate")
+def quote_duplicate(
+    quote_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    original = db.get(
+        Quote,
+        quote_id,
+    )
+
+    if not original:
+        raise HTTPException(
+            status_code=404,
+            detail="Cotización no encontrada.",
+        )
+
+
+    today = date.today()
+
+
+    duplicated = Quote(
+        prospect_id=
+            original.prospect_id,
+
+        quote_date=today,
+
+        valid_until=(
+            today
+            + timedelta(days=5)
+        ),
+
+        status=QuoteStatus.DRAFT,
+
+        notes=original.notes,
+
+        terms=original.terms,
+
+        net_clp=
+            original.net_clp,
+
+        tax_clp=
+            original.tax_clp,
+
+        total_clp=
+            original.total_clp,
+    )
+
+
+    db.add(duplicated)
+
+    db.flush()
+
+
+    duplicated.quote_number = (
+        f"COT-{today.year}-"
+        f"{duplicated.id:05d}"
+    )
+
+
+    for item in original.items:
+
+        db.add(
+            QuoteItem(
+                quote_id=
+                    duplicated.id,
+
+                product_id=
+                    item.product_id,
+
+                product_name_snapshot=
+                    item.product_name_snapshot,
+
+                quantity_kg=
+                    item.quantity_kg,
+
+                unit_price_gross_clp=
+                    item.unit_price_gross_clp,
+
+                line_total_gross_clp=
+                    item.line_total_gross_clp,
+            )
+        )
+
+
+    prospect = db.get(
+        Prospect,
+        original.prospect_id,
+    )
+
+
+    if (
+        prospect
+        and prospect.status
+        != ProspectStatus.CUSTOMER
+    ):
+        prospect.status = (
+            ProspectStatus.QUOTED
+        )
+
+
+    log_event(
+        db,
+        request,
+        "QUOTE_DUPLICATED",
+        original.prospect_id,
+        {
+            "original_quote_id":
+                original.id,
+
+            "new_quote_id":
+                duplicated.id,
+
+            "new_quote_number":
+                duplicated.quote_number,
+        },
+    )
+
+
+    db.commit()
+
+
+    return RedirectResponse(
+        f"/quotes/{duplicated.id}?duplicated=1",
+        status_code=303,
     )

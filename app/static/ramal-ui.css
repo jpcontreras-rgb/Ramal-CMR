@@ -1898,3 +1898,114 @@
     }
 
 }
+
+
+/* =====================================================
+   GESTION DE COTIZACIONES
+===================================================== */
+
+.quote-management{
+    margin-top:24px;
+}
+
+.quote-management-actions{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:9px;
+
+    padding:15px;
+
+    border:1px solid #ddd3c5;
+    border-radius:14px;
+
+    background:#f7f2e9;
+}
+
+.quote-management-actions form{
+    margin:0;
+}
+
+.quote-reject-button{
+    color:#8c3e34 !important;
+    border-color:#d5afa8 !important;
+}
+
+.quote-management-success{
+    margin-bottom:12px;
+
+    padding:13px 15px;
+
+    border-radius:11px;
+
+    background:#e0ead9;
+    color:#3f5638;
+
+    font-size:12px;
+    font-weight:600;
+}
+
+
+.quotes-filter-advanced{
+    grid-template-columns:
+        minmax(190px,1.4fr)
+        minmax(170px,1fr)
+        150px
+        145px
+        145px
+        auto
+        auto !important;
+
+    align-items:end;
+}
+
+
+.quote-date-filter{
+    margin:0 !important;
+}
+
+.quote-date-filter span{
+    display:block;
+
+    margin-bottom:4px;
+
+    font-size:9px;
+    font-weight:700;
+
+    text-transform:uppercase;
+    letter-spacing:.7px;
+
+    color:#847d72;
+}
+
+
+@media(max-width:1100px){
+
+    .quotes-filter-advanced{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr))
+            !important;
+    }
+
+}
+
+
+@media(max-width:600px){
+
+    .quotes-filter-advanced{
+        grid-template-columns:
+            1fr !important;
+    }
+
+    .quote-management-actions{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .quote-management-actions form,
+    .quote-management-actions button,
+    .quote-management-actions a{
+        width:100%;
+    }
+
+}
