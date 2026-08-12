@@ -1681,13 +1681,48 @@ def quotes_list(
     request: Request,
     q: str = "",
     status: str = "",
-    prospect_id: int | None = None,
-    date_from: date | None = None,
-    date_to: date | None = None,
+    prospect_id: str = "",
+    date_from: str = "",
+    date_to: str = "",
     db: Session = Depends(get_db),
 ):
 
     today = date.today()
+
+    # Los formularios GET envían "" cuando un filtro
+    # está vacío. Lo convertimos manualmente a None.
+    prospect_id_value = None
+
+    if prospect_id.strip():
+        try:
+            prospect_id_value = int(
+                prospect_id.strip()
+            )
+        except ValueError:
+            prospect_id_value = None
+
+
+    def parse_optional_date(
+        value: str,
+    ):
+        value = (value or "").strip()
+
+        if not value:
+            return None
+
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+
+
+    date_from_value = parse_optional_date(
+        date_from
+    )
+
+    date_to_value = parse_optional_date(
+        date_to
+    )
 
     stmt = select(Quote)
 
@@ -1720,10 +1755,11 @@ def quotes_list(
     # EMPRESA / CLIENTE
     # --------------------------------------------------
 
-    if prospect_id:
+    if prospect_id_value:
 
         stmt = stmt.where(
-            Quote.prospect_id == prospect_id
+            Quote.prospect_id
+            == prospect_id_value
         )
 
 
@@ -1731,16 +1767,18 @@ def quotes_list(
     # FECHAS
     # --------------------------------------------------
 
-    if date_from:
+    if date_from_value:
 
         stmt = stmt.where(
-            Quote.quote_date >= date_from
+            Quote.quote_date
+            >= date_from_value
         )
 
-    if date_to:
+    if date_to_value:
 
         stmt = stmt.where(
-            Quote.quote_date <= date_to
+            Quote.quote_date
+            <= date_to_value
         )
 
 
@@ -1869,11 +1907,11 @@ def quotes_list(
             "q": q,
             "status_filter": status,
             "prospect_filter":
-                prospect_id,
+                prospect_id_value,
             "date_from":
-                date_from,
+                date_from_value,
             "date_to":
-                date_to,
+                date_to_value,
             "companies":
                 companies,
             "total_quotes":
