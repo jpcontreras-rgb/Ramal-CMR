@@ -1571,3 +1571,77 @@ def clients(
             "q": q,
         },
     )
+
+
+@router.get(
+    "/clients/new",
+    response_class=HTMLResponse,
+)
+def client_new(
+    request: Request,
+):
+    return templates.TemplateResponse(
+        request,
+        "client_new.html",
+        {},
+    )
+
+
+@router.post("/clients/new")
+def client_create(
+    request: Request,
+    company_name: str = Form(...),
+    branch: str = Form(""),
+    industry: str = Form(""),
+    address: str = Form(""),
+    commune: str = Form(""),
+    city: str = Form(""),
+    phone: str = Form(""),
+    whatsapp: str = Form(""),
+    email: str = Form(""),
+    instagram: str = Form(""),
+    website: str = Form(""),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+
+    client = Prospect(
+        company_name=company_name.strip(),
+        branch=branch.strip() or None,
+        industry=industry.strip() or None,
+        address=address.strip() or None,
+        commune=commune.strip() or None,
+        city=city.strip() or None,
+        phone=phone.strip() or None,
+        whatsapp=whatsapp.strip() or None,
+        email=email.strip() or None,
+        instagram=instagram.strip() or None,
+        website=website.strip() or None,
+        notes=notes.strip() or None,
+
+        # Se crea inmediatamente como cliente
+        status=ProspectStatus.CUSTOMER,
+
+        source="Ingreso directo",
+    )
+
+    db.add(client)
+    db.flush()
+
+    log_event(
+        db,
+        request,
+        "CLIENT_CREATED_DIRECTLY",
+        client.id,
+        {
+            "company_name": client.company_name,
+        },
+    )
+
+    db.commit()
+    db.refresh(client)
+
+    return RedirectResponse(
+        f"/prospects/{client.id}",
+        status_code=303,
+    )

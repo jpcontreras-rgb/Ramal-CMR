@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="products-header">
+
+    <div>
+        <div class="dashboard-eyebrow">
+            NUEVO CLIENTE
+        </div>
+
+        <h1>Agregar cliente</h1>
+
+        <div class="muted">
+            Se incorporará directamente a la cartera de clientes,
+            sin pasar por Prospectos.
+        </div>
+    </div>
+
+    <a class="btn" href="/clients">
+        Volver
+    </a>
+
+</div>
+
+
+<form
+    method="post"
+    action="/clients/new"
+    class="card product-form"
+>
+
+    <label class="product-form-wide">
+        Empresa / Nombre comercial
+
+        <input
+            name="company_name"
+            required
+            autofocus
+            placeholder="Ej. Banquetería Los Robles"
+        >
+    </label>
+
+
+    <label>
+        Sucursal
+
+        <input
+            name="branch"
+            placeholder="Opcional"
+        >
+    </label>
+
+
+    <label>
+        Rubro
+
+        <input
+            name="industry"
+            placeholder="Restaurant, cafetería, banquetería..."
+        >
+    </label>
+
+
+    <label class="product-form-wide">
+        Dirección
+
+        <input
+            name="address"
+        >
+    </label>
+
+
+    <label>
+        Comuna
+
+        <input
+            name="commune"
+        >
+    </label>
+
+
+    <label>
+        Ciudad
+
+        <input
+            name="city"
+            value="Santiago"
+        >
+    </label>
+
+
+    <label>
+        Teléfono
+
+        <input
+            name="phone"
+        >
+    </label>
+
+
+    <label>
+        WhatsApp
+
+        <input
+            name="whatsapp"
+        >
+    </label>
+
+
+    <label>
+        Email
+
+        <input
+            type="email"
+            name="email"
+        >
+    </label>
+
+
+    <label>
+        Instagram
+
+        <input
+            name="instagram"
+            placeholder="@empresa"
+        >
+    </label>
+
+
+    <label class="product-form-wide">
+        Sitio web
+
+        <input
+            name="website"
+        >
+    </label>
+
+
+    <label class="product-form-wide">
+        Observaciones
+
+        <textarea
+            name="notes"
+            rows="4"
+        ></textarea>
+    </label>
+
+
+    <button
+        type="submit"
+        class="btn btn-primary product-form-wide"
+    >
+        Crear cliente
+    </button>
+
+</form>
+
+{% endblock %}
