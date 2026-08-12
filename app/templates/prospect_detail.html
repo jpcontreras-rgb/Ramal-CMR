@@ -515,7 +515,83 @@
 </div>
 
 
-<h2>Nueva cotización rápida</h2><form class="form card" method="post" action="/prospects/{{p.id}}/quotes"><select name="product_id" required>{% for x in products %}<option value="{{x.id}}">{{x.category}} · {{x.name}} · {{x.price_gross_clp|clp}}</option>{% endfor %}</select><input name="quantity_kg" type="number" min="0.001" step="0.001" placeholder="Cantidad kg" required><input name="unit_price_gross_clp" type="number" step="1" placeholder="Precio final/kg (opcional; usa lista por defecto)"><textarea name="notes" placeholder="Notas"></textarea><button class="btn btn-primary">Crear cotización</button></form><h2>Cotizaciones</h2><div class="list">{% for q in quotes %}<a class="card row" href="/quotes/{{q.id}}"><div><strong>{{q.quote_number}}</strong><div class="muted">Válida hasta {{q.valid_until}}</div></div><div class="money">{{q.total_clp|clp}}</div></a>{% else %}<div class="card muted">Aún no hay cotizaciones.</div>{% endfor %}</div>
+
+<h2>Cotizaciones</h2>
+
+<div class="card quote-prospect-action">
+
+    <div>
+
+        <strong>
+            Cotizar productos Ramal
+        </strong>
+
+        <div class="muted">
+            Selecciona varios productos,
+            cantidades y genera la cotización.
+        </div>
+
+    </div>
+
+    <a
+        class="btn btn-primary"
+        href="/prospects/{{p.id}}/quotes/new"
+    >
+        + Nueva cotización
+    </a>
+
+</div>
+
+
+<div class="list quote-history">
+
+{% for q in quotes %}
+
+<a
+    class="card row"
+    href="/quotes/{{q.id}}"
+>
+
+    <div>
+
+        <strong>
+            {{q.quote_number}}
+        </strong>
+
+        <div class="muted">
+            {{q.quote_date.strftime('%d/%m/%Y')}}
+            ·
+            Válida hasta
+            {{q.valid_until.strftime('%d/%m/%Y')}}
+        </div>
+
+    </div>
+
+
+    <div>
+
+        <strong>
+            {{q.total_clp|clp}}
+        </strong>
+
+        <span class="pill">
+            {{q.status.value}}
+        </span>
+
+    </div>
+
+</a>
+
+{% else %}
+
+<div class="card muted">
+    Aún no hay cotizaciones.
+</div>
+
+{% endfor %}
+
+</div>
+
 <h2>Administración</h2>
 
 <div class="card danger-zone">

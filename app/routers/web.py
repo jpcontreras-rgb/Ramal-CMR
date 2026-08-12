@@ -13,7 +13,7 @@ from app.db import get_db
 from app.config import settings
 from app.models import Product, Prospect, ProspectStatus, Quote, QuoteItem, Order, Contact, Activity, AuditEvent
 from app.services.google_places import search_places
-from app.services.pricing import split_gross
+from app.services.pricing import split_gross, money
 from app.services.tavily_enrichment import enrich_company
 from app.security import require_user, log_event
 
@@ -1018,19 +1018,226 @@ async def web_search_page(request: Request, q: str | None = None, db: Session = 
     return templates.TemplateResponse(request, "web_search.html", {"q": q or "", "results": results, "error": error})
 
 
+
+@router.get(
+    "/prospects/{prospect_id}/quotes/new",
+    response_class=HTMLResponse,
+)
+def quote_new(
+    prospect_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    p = db.get(
+        Prospect,
+        prospect_id,
+    )
+
+    if not p:
+        return RedirectResponse(
+            "/prospects",
+            status_code=303,
+        )
+
+
+    products = db.scalars(
+        select(Product)
+        .where(
+            Product.active.is_(True),
+            Product.price_gross_clp.is_not(None),
+        )
+        .order_by(
+            Product.category,
+            Product.name,
+        )
+    ).all()
+
+
+    return templates.TemplateResponse(
+        request,
+        "quote_new.html",
+        {
+            "p": p,
+            "products": products,
+        },
+    )
+
+
+
 @router.post("/prospects/{prospect_id}/quotes")
-def quote_create_form(prospect_id: int, request: Request, product_id: int = Form(...), quantity_kg: Decimal = Form(...), unit_price_gross_clp: Decimal | None = Form(None), notes: str = Form(""), db: Session = Depends(get_db)):
-    product = db.get(Product, product_id)
-    unit = unit_price_gross_clp or product.price_gross_clp
-    if unit is None:
-        return RedirectResponse(f"/prospects/{prospect_id}?error=precio", status_code=303)
-    q = Quote(prospect_id=prospect_id, quote_date=date.today(), valid_until=date.today()+timedelta(days=5), notes=notes or None)
-    db.add(q); db.flush(); q.quote_number=f"COT-{q.quote_date.year}-{q.id:05d}"
-    gross=(quantity_kg*unit).quantize(Decimal("1"))
-    db.add(QuoteItem(quote_id=q.id, product_id=product.id, product_name_snapshot=product.name, quantity_kg=quantity_kg, unit_price_gross_clp=unit, line_total_gross_clp=gross))
-    q.net_clp,q.tax_clp,q.total_clp=split_gross(gross)
-    p=db.get(Prospect, prospect_id)
-    p.status=ProspectStatus.QUOTED
+def quote_create_form(
+    prospect_id: int,
+    request: Request,
+    product_id: list[int] = Form(...),
+    quantity_kg: list[Decimal] = Form(...),
+    notes: str = Form(""),
+    db: Session = Depends(get_db),
+):
+
+    prospect = db.get(
+        Prospect,
+        prospect_id,
+    )
+
+    if not prospect:
+        return RedirectResponse(
+            "/prospects",
+            status_code=303,
+        )
+
+
+    if len(product_id) != len(quantity_kg):
+
+        return RedirectResponse(
+            f"/prospects/{prospect_id}/quotes/new?error=items",
+            status_code=303,
+        )
+
+
+    # Agrupar el mismo producto si fue agregado dos veces.
+    quantities = {}
+
+    for pid, qty in zip(
+        product_id,
+        quantity_kg,
+    ):
+
+        if qty <= 0:
+            continue
+
+        quantities[pid] = (
+            quantities.get(
+                pid,
+                Decimal("0"),
+            )
+            + qty
+        )
+
+
+    if not quantities:
+
+        return RedirectResponse(
+            f"/prospects/{prospect_id}/quotes/new?error=empty",
+            status_code=303,
+        )
+
+
+    prepared_items = []
+
+    total_gross = Decimal("0")
+
+
+    for pid, qty in quantities.items():
+
+        product = db.get(
+            Product,
+            pid,
+        )
+
+        if (
+            not product
+            or not product.active
+            or product.price_gross_clp is None
+        ):
+
+            return RedirectResponse(
+                f"/prospects/{prospect_id}/quotes/new?error=product",
+                status_code=303,
+            )
+
+
+        unit_price = money(
+            Decimal(
+                product.price_gross_clp
+            )
+        )
+
+
+        line_total = money(
+            qty * unit_price
+        )
+
+
+        prepared_items.append(
+            {
+                "product": product,
+                "quantity": qty,
+                "unit_price": unit_price,
+                "line_total": line_total,
+            }
+        )
+
+
+        total_gross += line_total
+
+
+    total_gross = money(
+        total_gross
+    )
+
+
+    net,
+    tax,
+    total = split_gross(
+        total_gross
+    )
+
+
+    today = date.today()
+
+
+    quote = Quote(
+        prospect_id=prospect_id,
+        quote_date=today,
+        valid_until=(
+            today
+            + timedelta(days=5)
+        ),
+        notes=notes.strip() or None,
+        terms=(
+            "Esta cotización tiene una vigencia "
+            "de 5 días corridos desde su fecha "
+            "de emisión. Transcurrido dicho plazo, "
+            "precios y disponibilidad deberán ser "
+            "confirmados nuevamente."
+        ),
+        net_clp=net,
+        tax_clp=tax,
+        total_clp=total,
+    )
+
+
+    db.add(quote)
+
+    db.flush()
+
+
+    quote.quote_number = (
+        f"COT-{today.year}-{quote.id:05d}"
+    )
+
+
+    for item in prepared_items:
+
+        product = item["product"]
+
+        db.add(
+            QuoteItem(
+                quote_id=quote.id,
+                product_id=product.id,
+                product_name_snapshot=product.name,
+                quantity_kg=item["quantity"],
+                unit_price_gross_clp=item["unit_price"],
+                line_total_gross_clp=item["line_total"],
+            )
+        )
+
+
+    prospect.status = (
+        ProspectStatus.QUOTED
+    )
+
 
     log_event(
         db,
@@ -1038,14 +1245,24 @@ def quote_create_form(prospect_id: int, request: Request, product_id: int = Form
         "QUOTE_CREATED",
         prospect_id,
         {
-            "quote_id": q.id,
+            "quote_id": quote.id,
             "quote_number":
-                q.quote_number,
+                quote.quote_number,
+            "items":
+                len(prepared_items),
+            "total_clp":
+                int(total),
         },
     )
 
+
     db.commit()
-    return RedirectResponse(f"/quotes/{q.id}", status_code=303)
+
+
+    return RedirectResponse(
+        f"/quotes/{quote.id}",
+        status_code=303,
+    )
 
 
 @router.get("/quotes/{quote_id}", response_class=HTMLResponse)

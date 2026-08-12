@@ -1,1 +1,250 @@
-{% extends "base.html" %}{% block content %}<div class="quote"><div class="quote-head"><div><div class="brand" style="color:#163d2b">RAMAL</div><h1>Cotización</h1></div><div><strong>{{q.quote_number}}</strong><div>Fecha {{q.quote_date}}</div><div>Válida hasta <strong>{{q.valid_until}}</strong></div></div></div><hr><h2>{{q.prospect.company_name}}</h2><div class="table-wrap"><table class="table"><thead><tr><th>Producto</th><th>Kg</th><th>Precio/kg</th><th>Total</th></tr></thead><tbody>{% for i in q.items %}<tr><td>{{i.product_name_snapshot}}</td><td>{{i.quantity_kg}}</td><td>{{i.unit_price_gross_clp|clp}}</td><td>{{i.line_total_gross_clp|clp}}</td></tr>{% endfor %}</tbody></table></div><div style="text-align:right"><p>Neto {{q.net_clp|clp}}</p><p>IVA {{q.tax_clp|clp}}</p><h2>Total {{q.total_clp|clp}}</h2></div><div class="notice">{{q.terms}}</div><p class="muted">Precios finales en CLP. Datos de disponibilidad sujetos a confirmación.</p><button class="btn btn-primary no-print" onclick="window.print()">Imprimir / guardar PDF</button></div>{% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="quote-document">
+
+
+    <div class="quote-document-head">
+
+        <div>
+
+            <div class="quote-ramal">
+                Ramal
+            </div>
+
+            <div class="quote-ramal-sub">
+                Comer rico, fácil y sin cocinar
+            </div>
+
+        </div>
+
+
+        <div class="quote-number-block">
+
+            <div class="quote-label">
+                COTIZACIÓN
+            </div>
+
+            <strong>
+                {{q.quote_number}}
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="quote-info-grid">
+
+        <div>
+
+            <div class="quote-label">
+                CLIENTE
+            </div>
+
+            <strong>
+                {{q.prospect.company_name}}
+            </strong>
+
+            {% if q.prospect.email %}
+            <div>
+                {{q.prospect.email}}
+            </div>
+            {% endif %}
+
+            {% if q.prospect.phone %}
+            <div>
+                {{q.prospect.phone}}
+            </div>
+            {% endif %}
+
+        </div>
+
+
+        <div>
+
+            <div class="quote-label">
+                FECHA DE EMISIÓN
+            </div>
+
+            <strong>
+                {{q.quote_date.strftime('%d/%m/%Y')}}
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <div class="quote-label">
+                VÁLIDA HASTA
+            </div>
+
+            <strong>
+                {{q.valid_until.strftime('%d/%m/%Y')}}
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <div class="quote-label">
+                ESTADO
+            </div>
+
+            <strong>
+                {{q.status.value}}
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="quote-table-wrap">
+
+        <table class="quote-table">
+
+            <thead>
+
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio unitario</th>
+                    <th>Total</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for item in q.items %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            {{item.product_name_snapshot}}
+                        </strong>
+                    </td>
+
+                    <td>
+                        {{item.quantity_kg}}
+                        kg
+                    </td>
+
+                    <td>
+                        {{item.unit_price_gross_clp|clp}}
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{item.line_total_gross_clp|clp}}
+                        </strong>
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div class="quote-total-area">
+
+        <div class="quote-notes-output">
+
+            {% if q.notes %}
+
+                <div class="quote-label">
+                    OBSERVACIONES
+                </div>
+
+                <p>
+                    {{q.notes}}
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="quote-totals">
+
+            <div>
+                <span>Neto</span>
+                <strong>
+                    {{q.net_clp|clp}}
+                </strong>
+            </div>
+
+            <div>
+                <span>IVA 19%</span>
+                <strong>
+                    {{q.tax_clp|clp}}
+                </strong>
+            </div>
+
+            <div class="grand-total">
+                <span>Total</span>
+                <strong>
+                    {{q.total_clp|clp}}
+                </strong>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="quote-terms">
+
+        <strong>
+            Vigencia y condiciones
+        </strong>
+
+        <p>
+            {{q.terms}}
+        </p>
+
+        <small>
+            Valores expresados en pesos chilenos.
+            Los precios unitarios indicados incluyen IVA.
+            Disponibilidad de productos sujeta a confirmación.
+        </small>
+
+    </div>
+
+
+    <div class="quote-actions no-print">
+
+        <a
+            class="btn"
+            href="/prospects/{{q.prospect_id}}"
+        >
+            Volver al cliente
+        </a>
+
+
+        <button
+            class="btn btn-primary"
+            onclick="window.print()"
+        >
+            Imprimir / guardar PDF
+        </button>
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

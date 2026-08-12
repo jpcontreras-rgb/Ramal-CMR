@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="quote-builder-head">
+
+    <div>
+        <div class="dashboard-eyebrow">
+            NUEVA COTIZACIÓN
+        </div>
+
+        <h1>{{p.company_name}}</h1>
+
+        <div class="muted">
+            Selecciona productos y cantidades.
+            La cotización tendrá una vigencia de 5 días corridos.
+        </div>
+    </div>
+
+    <a
+        class="btn"
+        href="/prospects/{{p.id}}"
+    >
+        Volver
+    </a>
+
+</div>
+
+
+<form
+    id="quote-form"
+    method="post"
+    action="/prospects/{{p.id}}/quotes"
+    class="quote-builder"
+>
+
+    <div class="card">
+
+        <div class="quote-builder-title">
+
+            <div>
+                <h2>Productos</h2>
+
+                <div class="muted">
+                    Los precios indicados incluyen IVA.
+                </div>
+            </div>
+
+            <button
+                type="button"
+                class="btn"
+                id="add-item"
+            >
+                + Agregar producto
+            </button>
+
+        </div>
+
+
+        <div class="quote-items-header">
+            <div>Producto</div>
+            <div>Cantidad kg</div>
+            <div>Precio/kg</div>
+            <div>Total</div>
+            <div></div>
+        </div>
+
+
+        <div id="quote-items"></div>
+
+    </div>
+
+
+    <div class="quote-builder-bottom">
+
+        <div class="card quote-notes">
+
+            <h3>Observaciones</h3>
+
+            <textarea
+                name="notes"
+                placeholder="Condiciones especiales, despacho, observaciones comerciales..."
+            ></textarea>
+
+
+            <div class="quote-validity-box">
+
+                <strong>
+                    Vigencia de la cotización
+                </strong>
+
+                <span>
+                    5 días corridos desde la fecha de emisión.
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="card quote-summary">
+
+            <div class="quote-summary-title">
+                Resumen
+            </div>
+
+
+            <div class="quote-summary-row">
+
+                <span>Neto</span>
+
+                <strong id="preview-net">
+                    $0
+                </strong>
+
+            </div>
+
+
+            <div class="quote-summary-row">
+
+                <span>IVA 19%</span>
+
+                <strong id="preview-tax">
+                    $0
+                </strong>
+
+            </div>
+
+
+            <div class="quote-summary-row total">
+
+                <span>Total</span>
+
+                <strong id="preview-total">
+                    $0
+                </strong>
+
+            </div>
+
+
+            <button
+                class="btn btn-primary quote-submit"
+                type="submit"
+            >
+                Generar cotización
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+
+<template id="quote-item-template">
+
+    <div class="quote-item-row">
+
+        <select
+            name="product_id"
+            class="quote-product"
+            required
+        >
+
+            <option value="">
+                Seleccionar producto
+            </option>
+
+            {% for product in products %}
+
+                {% if product.price_gross_clp is not none %}
+
+                <option
+                    value="{{product.id}}"
+                    data-price="{{product.price_gross_clp}}"
+                >
+                    {{product.category}}
+                    ·
+                    {{product.name}}
+                    ·
+                    {{product.price_gross_clp|clp}}
+                </option>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </select>
+
+
+        <input
+            name="quantity_kg"
+            class="quote-quantity"
+            type="number"
+            min="0.001"
+            step="0.001"
+            value="1"
+            required
+        >
+
+
+        <div class="quote-unit-price">
+            —
+        </div>
+
+
+        <div class="quote-line-total">
+            $0
+        </div>
+
+
+        <button
+            type="button"
+            class="quote-remove"
+            title="Quitar producto"
+        >
+            ×
+        </button>
+
+    </div>
+
+</template>
+
+
+<script>
+
+const itemsContainer =
+    document.getElementById("quote-items");
+
+const template =
+    document.getElementById("quote-item-template");
+
+const addButton =
+    document.getElementById("add-item");
+
+
+function clp(value) {
+
+    return new Intl.NumberFormat(
+        "es-CL",
+        {
+            style: "currency",
+            currency: "CLP",
+            maximumFractionDigits: 0
+        }
+    ).format(value || 0);
+
+}
+
+
+function recalculate() {
+
+    let gross = 0;
+
+    document
+        .querySelectorAll(".quote-item-row")
+        .forEach(row => {
+
+            const select =
+                row.querySelector(".quote-product");
+
+            const qty =
+                Number(
+                    row.querySelector(".quote-quantity").value
+                ) || 0;
+
+            const option =
+                select.options[select.selectedIndex];
+
+            const price =
+                Number(option?.dataset?.price || 0);
+
+            const lineTotal =
+                qty * price;
+
+            row.querySelector(
+                ".quote-unit-price"
+            ).textContent = price
+                ? clp(price)
+                : "—";
+
+            row.querySelector(
+                ".quote-line-total"
+            ).textContent = clp(lineTotal);
+
+            gross += lineTotal;
+
+        });
+
+
+    const net =
+        Math.round(gross / 1.19);
+
+    const tax =
+        Math.round(gross - net);
+
+
+    document.getElementById(
+        "preview-net"
+    ).textContent = clp(net);
+
+
+    document.getElementById(
+        "preview-tax"
+    ).textContent = clp(tax);
+
+
+    document.getElementById(
+        "preview-total"
+    ).textContent = clp(gross);
+
+}
+
+
+function addRow() {
+
+    const fragment =
+        template.content.cloneNode(true);
+
+    const row =
+        fragment.querySelector(".quote-item-row");
+
+
+    row.querySelector(
+        ".quote-product"
+    ).addEventListener(
+        "change",
+        recalculate
+    );
+
+
+    row.querySelector(
+        ".quote-quantity"
+    ).addEventListener(
+        "input",
+        recalculate
+    );
+
+
+    row.querySelector(
+        ".quote-remove"
+    ).addEventListener(
+        "click",
+        () => {
+
+            row.remove();
+
+            if (
+                document.querySelectorAll(
+                    ".quote-item-row"
+                ).length === 0
+            ) {
+                addRow();
+            }
+
+            recalculate();
+
+        }
+    );
+
+
+    itemsContainer.appendChild(fragment);
+
+    recalculate();
+
+}
+
+
+addButton.addEventListener(
+    "click",
+    addRow
+);
+
+
+addRow();
+
+</script>
+
+
+{% endblock %}
