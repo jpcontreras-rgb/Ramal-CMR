@@ -1,3 +1,4 @@
+import asyncio
 import datetime as dt
 from datetime import date, datetime, timedelta
 from decimal import Decimal
@@ -27,6 +28,7 @@ from app.models import (
 from app.services.google_places import search_places
 from app.services.pricing import split_gross, money
 from app.services.tavily_enrichment import enrich_company
+from app.services.opportunity_analysis import analyze_restaurant_opportunity
 from app.security import require_user, log_event
 
 router = APIRouter(dependencies=[Depends(require_user)])
@@ -2231,5 +2233,560 @@ def quote_duplicate(
 
     return RedirectResponse(
         f"/quotes/{duplicated.id}?duplicated=1",
+        status_code=303,
+    )
+
+
+
+@router.get(
+    "/opportunities",
+    response_class=HTMLResponse,
+)
+def opportunities_page(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+
+    products = db.scalars(
+        select(Product)
+        .where(
+            Product.active.is_(True)
+        )
+        .order_by(
+            Product.category,
+            Product.name,
+        )
+    ).all()
+
+    return templates.TemplateResponse(
+        request,
+        "opportunities.html",
+        {
+            "products":
+                products,
+
+            "results":
+                None,
+
+            "zone":
+                "",
+
+            "business_type":
+                "restaurantes",
+
+            "product_filter":
+                "",
+
+            "max_results":
+                6,
+
+            "search_error":
+                None,
+        },
+    )
+
+
+
+@router.post(
+    "/opportunities",
+    response_class=HTMLResponse,
+)
+async def opportunities_search(
+    request: Request,
+    zone: str = Form(...),
+    business_type: str = Form(
+        "restaurantes"
+    ),
+    product_id: str = Form(""),
+    max_results: int = Form(6),
+    db: Session = Depends(get_db),
+):
+
+    products = db.scalars(
+        select(Product)
+        .where(
+            Product.active.is_(True)
+        )
+        .order_by(
+            Product.category,
+            Product.name,
+        )
+    ).all()
+
+
+    max_results = max(
+        1,
+        min(
+            max_results,
+            8,
+        ),
+    )
+
+
+    product_id_value = None
+
+    if product_id.strip().isdigit():
+        product_id_value = int(
+            product_id.strip()
+        )
+
+
+    selected_products = products
+
+    if product_id_value:
+
+        selected_products = [
+            product
+            for product in products
+            if product.id
+            == product_id_value
+        ]
+
+
+    product_payload = [
+        {
+            "id":
+                product.id,
+
+            "name":
+                product.name,
+
+            "category":
+                product.category,
+        }
+
+        for product
+        in selected_products
+    ]
+
+
+    results = []
+
+    search_error = None
+
+
+    try:
+
+        places = await search_places(
+            (
+                f"{business_type} "
+                f"en {zone}, Chile"
+            ),
+            max_results=max_results,
+        )
+
+
+        place_ids = [
+            place["google_place_id"]
+            for place in places
+            if place.get(
+                "google_place_id"
+            )
+        ]
+
+
+        existing_by_place = {}
+
+        if place_ids:
+
+            existing = db.scalars(
+                select(Prospect)
+                .where(
+                    Prospect.google_place_id
+                    .in_(place_ids)
+                )
+            ).all()
+
+            existing_by_place = {
+                prospect.google_place_id:
+                    prospect.id
+
+                for prospect
+                in existing
+            }
+
+
+        semaphore = asyncio.Semaphore(3)
+
+
+        async def analyze_place(
+            place: dict,
+        ) -> dict:
+
+            async with semaphore:
+
+                try:
+
+                    analysis = (
+                        await
+                        analyze_restaurant_opportunity(
+                            place.get(
+                                "company_name"
+                            )
+                            or "",
+
+                            place.get(
+                                "website"
+                            ),
+
+                            product_payload,
+                        )
+                    )
+
+                except Exception as exc:
+
+                    analysis = {
+                        "score":
+                            0,
+
+                        "level":
+                            "Sin análisis",
+
+                        "matches":
+                            [],
+
+                        "sources":
+                            [],
+
+                        "suggested_products_text":
+                            "",
+
+                        "evidence_text":
+                            "",
+
+                        "evidence_url":
+                            "",
+
+                        "error":
+                            str(exc),
+                    }
+
+
+                score = analysis.get(
+                    "score",
+                    0,
+                )
+
+                if place.get("phone"):
+                    score = min(
+                        100,
+                        score + 3,
+                    )
+
+
+                if score >= 80:
+                    analysis["level"] = (
+                        "Alta"
+                    )
+
+                elif score >= 60:
+                    analysis["level"] = (
+                        "Media"
+                    )
+
+                elif score > 0:
+                    analysis["level"] = (
+                        "Baja"
+                    )
+
+
+                analysis["score"] = score
+
+
+                return {
+                    **place,
+                    **analysis,
+
+                    "existing_id":
+                        existing_by_place.get(
+                            place.get(
+                                "google_place_id"
+                            )
+                        ),
+                }
+
+
+        results = await asyncio.gather(
+            *[
+                analyze_place(place)
+                for place in places
+            ]
+        )
+
+
+        results.sort(
+            key=lambda item:
+                item.get(
+                    "score",
+                    0,
+                ),
+            reverse=True,
+        )
+
+
+        log_event(
+            db,
+            request,
+            "OPPORTUNITY_SEARCH",
+            None,
+            {
+                "zone":
+                    zone,
+
+                "business_type":
+                    business_type,
+
+                "product_id":
+                    product_id_value,
+
+                "results":
+                    len(results),
+            },
+        )
+
+        db.commit()
+
+
+    except Exception as exc:
+
+        search_error = str(exc)
+
+
+    return templates.TemplateResponse(
+        request,
+        "opportunities.html",
+        {
+            "products":
+                products,
+
+            "results":
+                results,
+
+            "zone":
+                zone,
+
+            "business_type":
+                business_type,
+
+            "product_filter":
+                product_id,
+
+            "max_results":
+                max_results,
+
+            "search_error":
+                search_error,
+        },
+    )
+
+
+
+@router.post(
+    "/opportunities/add"
+)
+def opportunity_add(
+    request: Request,
+
+    company_name: str = Form(...),
+
+    industry: str = Form(""),
+
+    zone: str = Form(""),
+
+    address: str = Form(""),
+
+    phone: str = Form(""),
+
+    website: str = Form(""),
+
+    google_place_id: str = Form(""),
+
+    latitude: str = Form(""),
+
+    longitude: str = Form(""),
+
+    google_maps_url: str = Form(""),
+
+    score: int = Form(0),
+
+    level: str = Form(""),
+
+    suggested_products: str = Form(""),
+
+    evidence_text: str = Form(""),
+
+    evidence_url: str = Form(""),
+
+    db: Session = Depends(get_db),
+):
+
+
+    existing = None
+
+
+    if google_place_id:
+
+        existing = db.scalar(
+            select(Prospect).where(
+                Prospect.google_place_id
+                == google_place_id
+            )
+        )
+
+
+    if not existing:
+
+        existing = db.scalar(
+            select(Prospect).where(
+                func.lower(
+                    Prospect.company_name
+                )
+                == company_name
+                .strip()
+                .lower(),
+
+                Prospect.address
+                == (
+                    address.strip()
+                    or None
+                ),
+            )
+        )
+
+
+    if existing:
+
+        return RedirectResponse(
+            f"/prospects/{existing.id}",
+            status_code=303,
+        )
+
+
+    notes_parts = [
+        (
+            "Oportunidad detectada "
+            "automáticamente por Ramal CRM."
+        ),
+        (
+            f"Score comercial: "
+            f"{score}/100"
+            + (
+                f" ({level})."
+                if level
+                else "."
+            )
+        ),
+    ]
+
+
+    if suggested_products:
+
+        notes_parts.append(
+            "Productos Ramal sugeridos: "
+            + suggested_products
+            + "."
+        )
+
+
+    if evidence_text:
+
+        notes_parts.append(
+            "Evidencia encontrada: "
+            + evidence_text
+        )
+
+
+    prospect = Prospect(
+        company_name=
+            company_name.strip()[:180],
+
+        industry=
+            industry.strip()[:120]
+            or None,
+
+        commune=
+            zone.strip()[:100]
+            or None,
+
+        address=
+            address.strip()[:240]
+            or None,
+
+        phone=
+            phone.strip()[:80]
+            or None,
+
+        website=
+            website.strip()[:240]
+            or None,
+
+        google_place_id=
+            google_place_id.strip()[:180]
+            or None,
+
+        latitude=
+            float(latitude)
+            if latitude
+            else None,
+
+        longitude=
+            float(longitude)
+            if longitude
+            else None,
+
+        source=
+            "Oportunidades Ramal",
+
+        source_url=(
+            evidence_url.strip()
+            or google_maps_url.strip()
+            or ""
+        )[:500] or None,
+
+        status=
+            ProspectStatus.NEW,
+
+        potential=
+            level
+            or None,
+
+        owner=
+            request.state.user.full_name,
+
+        notes=
+            "\n\n".join(
+                notes_parts
+            ),
+    )
+
+
+    db.add(prospect)
+    db.flush()
+
+
+    log_event(
+        db,
+        request,
+        "OPPORTUNITY_ADDED",
+        prospect.id,
+        {
+            "score":
+                score,
+
+            "level":
+                level,
+
+            "suggested_products":
+                suggested_products,
+        },
+    )
+
+
+    db.commit()
+    db.refresh(prospect)
+
+
+    return RedirectResponse(
+        f"/prospects/{prospect.id}",
         status_code=303,
     )

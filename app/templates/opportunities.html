@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="opportunity-head">
+
+    <div>
+
+        <div class="dashboard-eyebrow">
+            INTELIGENCIA COMERCIAL RAMAL
+        </div>
+
+        <h1>Oportunidades</h1>
+
+        <div class="muted">
+            Busca negocios y analiza su carta,
+            sitio web y contenido público para
+            detectar productos Ramal compatibles.
+        </div>
+
+    </div>
+
+</div>
+
+
+<form
+    method="post"
+    action="/opportunities"
+    class="card opportunity-search-form"
+>
+
+    <label>
+
+        Zona / comuna
+
+        <input
+            name="zone"
+            value="{{zone}}"
+            placeholder="Ej. Vitacura"
+            required
+        >
+
+    </label>
+
+
+    <label>
+
+        Tipo de negocio
+
+        <select name="business_type">
+
+            {% for value, label in [
+                ("restaurantes", "Restaurantes"),
+                ("hamburgueserias", "Hamburgueserías"),
+                ("cafeterias", "Cafeterías"),
+                ("sandwicherias", "Sandwicherías"),
+                ("banqueterias", "Banqueterías"),
+                ("hoteles", "Hoteles"),
+                ("dark kitchens", "Dark kitchens")
+            ] %}
+
+            <option
+                value="{{value}}"
+                {% if business_type == value %}
+                selected
+                {% endif %}
+            >
+                {{label}}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </label>
+
+
+    <label>
+
+        Producto a buscar
+
+        <select name="product_id">
+
+            <option value="">
+                Todos los productos Ramal
+            </option>
+
+            {% for product in products %}
+
+            <option
+                value="{{product.id}}"
+                {% if product_filter|string == product.id|string %}
+                selected
+                {% endif %}
+            >
+                {{product.category}}
+                ·
+                {{product.name}}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </label>
+
+
+    <label>
+
+        Negocios a analizar
+
+        <select name="max_results">
+
+            {% for n in [4, 6, 8] %}
+
+            <option
+                value="{{n}}"
+                {% if max_results == n %}
+                selected
+                {% endif %}
+            >
+                {{n}}
+            </option>
+
+            {% endfor %}
+
+        </select>
+
+    </label>
+
+
+    <button
+        class="btn btn-primary opportunity-search-button"
+        type="submit"
+    >
+        Buscar y analizar
+    </button>
+
+</form>
+
+
+{% if search_error %}
+
+<div class="product-alert error">
+    No fue posible completar la búsqueda:
+    {{search_error}}
+</div>
+
+{% endif %}
+
+
+{% if results is not none %}
+
+<div class="opportunity-results-head">
+
+    <div>
+
+        <h2>
+            Resultados
+        </h2>
+
+        <div class="muted">
+            Ordenados desde la mayor oportunidad
+            comercial detectada.
+        </div>
+
+    </div>
+
+    <strong>
+        {{results|length}}
+        negocios
+    </strong>
+
+</div>
+
+
+<div class="opportunity-list">
+
+
+{% for r in results %}
+
+
+<div class="opportunity-card">
+
+
+    <div class="opportunity-company">
+
+
+        <div class="opportunity-score
+            {% if r.level == 'Alta' %}
+                high
+            {% elif r.level == 'Media' %}
+                medium
+            {% else %}
+                low
+            {% endif %}
+        ">
+
+            <strong>
+                {{r.score}}
+            </strong>
+
+            <span>
+                {{r.level}}
+            </span>
+
+        </div>
+
+
+        <div class="opportunity-company-data">
+
+            <h3>
+                {{r.company_name}}
+            </h3>
+
+            <div class="muted">
+                {{r.address or ""}}
+            </div>
+
+            {% if r.phone %}
+
+            <div class="opportunity-contact">
+                {{r.phone}}
+            </div>
+
+            {% endif %}
+
+
+            <div class="opportunity-links">
+
+                {% if r.website %}
+
+                <a
+                    href="{{r.website}}"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Sitio web
+                </a>
+
+                {% endif %}
+
+
+                {% if r.google_maps_url %}
+
+                <a
+                    href="{{r.google_maps_url}}"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Google Maps
+                </a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="opportunity-analysis">
+
+
+        {% if r.matches %}
+
+        <div class="opportunity-section-title">
+            Productos Ramal que podrían venderse
+        </div>
+
+
+        <div class="opportunity-products">
+
+            {% for match in r.matches %}
+
+            <div class="opportunity-product">
+
+                <strong>
+                    {{match.family}}
+                </strong>
+
+                <span>
+                    {{match.score}}%
+                </span>
+
+                <small>
+                    {{match.products|join(", ")}}
+                </small>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="opportunity-section-title">
+            Evidencia encontrada
+        </div>
+
+
+        {% for match in r.matches[:3] %}
+
+            {% if match.evidence %}
+
+            <div class="opportunity-evidence">
+
+                <strong>
+                    {{match.family}}
+                </strong>
+
+                <div>
+                    {{match.evidence[0].text}}
+                </div>
+
+                {% if match.evidence[0].url %}
+
+                <a
+                    href="{{match.evidence[0].url}}"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Ver fuente
+                </a>
+
+                {% endif %}
+
+            </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+
+        {% else %}
+
+        <div class="muted">
+            No encontramos una coincidencia clara
+            con el catálogo Ramal en las fuentes
+            revisadas.
+        </div>
+
+        {% endif %}
+
+
+        {% if r.error %}
+
+        <div class="muted opportunity-error">
+            Análisis web incompleto:
+            {{r.error}}
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="opportunity-action">
+
+
+        {% if r.existing_id %}
+
+        <a
+            class="btn"
+            href="/prospects/{{r.existing_id}}"
+        >
+            Ya existe · Ver prospecto
+        </a>
+
+
+        {% else %}
+
+        <form
+            method="post"
+            action="/opportunities/add"
+        >
+
+            <input
+                type="hidden"
+                name="company_name"
+                value="{{r.company_name or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="industry"
+                value="{{business_type}}"
+            >
+
+            <input
+                type="hidden"
+                name="zone"
+                value="{{zone}}"
+            >
+
+            <input
+                type="hidden"
+                name="address"
+                value="{{r.address or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="phone"
+                value="{{r.phone or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="website"
+                value="{{r.website or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="google_place_id"
+                value="{{r.google_place_id or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="latitude"
+                value="{{r.latitude or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="longitude"
+                value="{{r.longitude or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="google_maps_url"
+                value="{{r.google_maps_url or ''}}"
+            >
+
+            <input
+                type="hidden"
+                name="score"
+                value="{{r.score}}"
+            >
+
+            <input
+                type="hidden"
+                name="level"
+                value="{{r.level}}"
+            >
+
+            <input
+                type="hidden"
+                name="suggested_products"
+                value="{{r.suggested_products_text}}"
+            >
+
+            <input
+                type="hidden"
+                name="evidence_text"
+                value="{{r.evidence_text}}"
+            >
+
+            <input
+                type="hidden"
+                name="evidence_url"
+                value="{{r.evidence_url}}"
+            >
+
+
+            <button
+                class="btn btn-primary"
+                type="submit"
+            >
+                + Agregar a Prospectos
+            </button>
+
+        </form>
+
+        {% endif %}
+
+
+    </div>
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+{% endif %}
+
+
+{% endblock %}
